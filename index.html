@@ -3,96 +3,85 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ttb Trainer Task V3.1 (Pro)</title>
-    <!-- Tailwind CSS -->
+    <title>ttb Trainer Task V4.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Supabase SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Excel Export -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <!-- PDF Export -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <!-- FullCalendar -->
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.9/index.global.min.js"></script>
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
         body { background-color: #f8fafc; font-family: 'Prompt', sans-serif; -webkit-tap-highlight-color: transparent; }
         .bg-gradient-primary { background: linear-gradient(135deg, #002d63 0%, #0056b3 100%); }
-        .bg-gradient-success { background: linear-gradient(135deg, #059669 0%, #10b981 100%); }
-        .mobile-container { max-width: 480px; margin: 0 auto; min-height: 100vh; background-color: white; padding-bottom: 90px; position: relative; box-shadow: 0 0 20px rgba(0,0,0,0.05); }
         .input-rounded { border-radius: 12px; border: 1px solid #e2e8f0; transition: all 0.2s; appearance: none; }
         .input-rounded:focus { border-color: #0056b3; box-shadow: 0 0 0 3px rgba(0, 86, 179, 0.1); outline: none; }
         .loader { border: 3px solid #f3f3f3; border-radius: 50%; border-top: 3px solid #002d63; width: 32px; height: 32px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        /* Audience Colors */
+        
+        /* Calendar Styles */
+        .fc { font-size: 0.85em; }
+        .fc-toolbar-title { font-size: 1em !important; font-weight: 600; }
+        .fc-daygrid-day-frame { min-height: 40px !important; cursor: pointer; }
+        .fc-daygrid-event-dot { border-width: 3px !important; }
+        .fc-day-today { background-color: #f0f9ff !important; }
+        
+        /* Custom Task Card */
+        .task-card { transition: all 0.2s; border-left-width: 4px; border-radius: 0.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .task-card:active { transform: scale(0.98); }
+        
         .audience-ttb { border-left-color: #3b82f6; }
         .audience-pd { border-left-color: #10b981; }
         .audience-pru { border-left-color: #8b5cf6; }
         .audience-customer { border-left-color: #f59e0b; }
         .audience-other { border-left-color: #6b7280; }
-        /* Badges */
-        .badge-online { background-color: #10b981; color: white; }
-        .badge-f2f { background-color: #3b82f6; color: white; }
-        .badge-leave { background-color: #ef4444; color: white; }
-        .task-card { transition: all 0.2s; border-left-width: 4px; border-radius: 0.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        .task-card:active { transform: scale(0.98); }
-        /* Calendar Overrides */
-        .fc { font-size: 0.85em; }
-        .fc-toolbar-title { font-size: 1.1em !important; font-weight: 600; }
-        .fc-daygrid-event { border-radius: 4px !important; border: none !important; padding: 1px 2px !important; margin-bottom: 1px !important;}
+
         .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
-    <!-- Configuration -->
     <script>
-        // *** REPLACE THESE WITH YOUR OWN SUPABASE KEYS ***
+        // *** ใส่ Supabase Key ของคุณที่นี่ ***
         const SUPABASE_URL = 'https://anxfdwgmookmquuzkupa.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFueGZkd2dtb29rbXF1dXprdXBhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3ODk3NDMsImV4cCI6MjA4NjM2NTc0M30.4H8QVHAoIhpkNvN2eltbI31TwD5Lx2wTILZtZZFzCgQ';
         
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         
-        // App State
         let currentUser = null;
         let userProfile = null;
         let allProfiles = [];
         let calendarInstance = null;
+        let homeCalendarInstance = null;
     </script>
 
     <!-- LOGIN SCREEN -->
-    <div id="login-screen" class="mobile-container flex flex-col justify-center items-center p-8 bg-white absolute inset-0 z-[100]">
+    <div id="login-screen" class="min-h-screen flex flex-col justify-center items-center p-8 bg-white absolute inset-0 z-[100]">
         <div class="w-20 h-20 rounded-2xl bg-gradient-primary flex items-center justify-center text-white font-bold text-3xl shadow-xl mb-6">ttb</div>
-        <h2 class="text-xl font-bold text-slate-800 mb-1">Trainer Task V3.1</h2>
-        <p class="text-slate-400 text-xs mb-8 text-center">ระบบจัดการตารางงานแบบ Production Ready</p>
+        <h2 class="text-xl font-bold text-slate-800 mb-1">Trainer Task V4.0</h2>
+        <p class="text-slate-400 text-xs mb-8 text-center">ระบบบริหารจัดการงานสอน (Production)</p>
 
-        <form id="login-form" class="w-full space-y-4" onsubmit="handleLogin(event)">
+        <form id="login-form" class="w-full max-w-sm space-y-4" onsubmit="handleLogin(event)">
             <div>
-                <label class="block text-[10px] font-bold text-slate-500 mb-1.5 ml-1 uppercase">User ID (เช่น ttb_tt) หรือ Email</label>
-                <input type="text" id="login-id" required class="input-rounded w-full px-5 py-3.5 bg-slate-50 text-sm" placeholder="ระบุ User ID หรือ Email">
+                <label class="block text-[10px] font-bold text-slate-500 mb-1.5 ml-1 uppercase">User ID หรือ Email</label>
+                <input type="text" id="login-id" required class="input-rounded w-full px-5 py-3.5 bg-slate-50 text-sm" placeholder="เช่น ttb_tt">
             </div>
             <div>
                 <label class="block text-[10px] font-bold text-slate-500 mb-1.5 ml-1 uppercase">Password</label>
                 <input type="password" id="login-password" required class="input-rounded w-full px-5 py-3.5 bg-slate-50 text-sm" placeholder="••••••••">
             </div>
-            <button type="submit" class="w-full bg-gradient-primary text-white font-bold py-4 rounded-xl shadow-lg mt-2 transition-all active:scale-95">
+            <button type="submit" class="w-full bg-gradient-primary text-white font-bold py-4 rounded-xl shadow-lg mt-2 active:scale-95 transition-transform">
                 เข้าสู่ระบบ
             </button>
             <div id="login-error" class="text-red-500 text-xs text-center hidden p-2 bg-red-50 rounded-lg"></div>
         </form>
-        <p class="mt-auto text-[10px] text-slate-300">Default Password: ttb12345</p>
     </div>
 
-    <!-- MAIN APP CONTAINER -->
-    <div id="app" class="mobile-container hidden">
+    <!-- MAIN APP -->
+    <div id="app" class="hidden pb-20 max-w-lg mx-auto bg-white min-h-screen relative shadow-2xl">
         <!-- Header -->
-        <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-sm border-b border-slate-100 px-5 py-4 flex justify-between items-center shadow-sm">
+        <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-sm border-b border-slate-100 px-5 py-4 flex justify-between items-center">
             <div class="flex items-center gap-3">
                 <div id="header-avatar" class="w-9 h-9 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-sm"></div>
                 <div>
@@ -100,16 +89,14 @@
                     <p id="header-role" class="text-[10px] text-slate-500 leading-tight">Role</p>
                 </div>
             </div>
-            <button onclick="handleLogout()" class="text-slate-400 hover:text-red-500 p-2">
-                <i class="fa-solid fa-power-off"></i>
-            </button>
+            <button onclick="handleLogout()" class="text-slate-400 hover:text-red-500 p-2"><i class="fa-solid fa-power-off"></i></button>
         </header>
 
-        <!-- Dynamic Content Area -->
+        <!-- Dynamic Content -->
         <main id="main-content" class="px-4 py-6"></main>
 
-        <!-- Bottom Navigation -->
-        <nav class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] bg-white border-t border-slate-100 flex justify-around items-center py-2 z-50 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+        <!-- Nav -->
+        <nav class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-lg bg-white border-t border-slate-100 flex justify-around items-center py-2 z-50">
             <button onclick="renderDashboard()" class="nav-btn flex flex-col items-center gap-1 p-2 text-blue-600" id="nav-home">
                 <i class="fa-solid fa-house text-lg"></i><span class="text-[9px]">Home</span>
             </button>
@@ -119,22 +106,20 @@
             <button onclick="renderCreateTask()" class="w-12 h-12 bg-gradient-primary rounded-full text-white shadow-lg -mt-8 border-4 border-white flex items-center justify-center active:scale-95 transition-transform">
                 <i class="fa-solid fa-plus text-xl"></i>
             </button>
+            <button onclick="renderAvailabilityCheck()" id="nav-check" class="nav-btn flex flex-col items-center gap-1 p-2 text-slate-400 hidden">
+                <i class="fa-solid fa-magnifying-glass text-lg"></i><span class="text-[9px]">เช็คว่าง</span>
+            </button>
             <button onclick="renderReports()" class="nav-btn flex flex-col items-center gap-1 p-2 text-slate-400" id="nav-reports">
                 <i class="fa-solid fa-chart-pie text-lg"></i><span class="text-[9px]">รายงาน</span>
-            </button>
-            <button onclick="renderProfile()" class="nav-btn flex flex-col items-center gap-1 p-2 text-slate-400" id="nav-profile">
-                <i class="fa-solid fa-user text-lg"></i><span class="text-[9px]">โปรไฟล์</span>
             </button>
         </nav>
     </div>
 
-    <!-- Loading Overlay -->
+    <!-- Loading & Modal -->
     <div id="loading-overlay" class="fixed inset-0 bg-white/80 z-[200] flex flex-col items-center justify-center hidden">
-        <div class="loader mb-2"></div>
-        <p class="text-slate-500 text-xs animate-pulse">กำลังโหลดข้อมูล...</p>
+        <div class="loader mb-2"></div><p class="text-slate-500 text-xs">Loading...</p>
     </div>
 
-    <!-- Modals -->
     <div id="modal-container" class="fixed inset-0 bg-black/60 z-[300] flex items-center justify-center hidden p-4 backdrop-blur-sm">
         <div class="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl animate-[fadeIn_0.2s_ease-out]">
             <div id="modal-content"></div>
@@ -142,306 +127,201 @@
     </div>
 
     <script>
-        // ================= UTILITIES =================
+        // ================= UTILS =================
         const showLoading = (show) => document.getElementById('loading-overlay').classList.toggle('hidden', !show);
-        
+        const formatDateThai = (d) => new Date(d).toLocaleDateString('th-TH', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+        const formatTime = (t) => t.substring(0, 5);
         const setActiveNav = (id) => {
-            document.querySelectorAll('.nav-btn').forEach(b => {
-                b.classList.remove('text-blue-600');
-                b.classList.add('text-slate-400');
-            });
-            const btn = document.getElementById(id);
-            if(btn) {
-                btn.classList.add('text-blue-600');
-                btn.classList.remove('text-slate-400');
-            }
+            document.querySelectorAll('.nav-btn').forEach(b => { b.classList.remove('text-blue-600'); b.classList.add('text-slate-400'); });
+            const btn = document.getElementById(id); if(btn) { btn.classList.add('text-blue-600'); btn.classList.remove('text-slate-400'); }
         };
+        const getAudienceColor = (aud) => ({ 'ttb': '#3b82f6', 'PD ttb': '#10b981', 'PRU': '#8b5cf6', 'Customer': '#f59e0b' }[aud] || '#6b7280');
+        const getAudienceClass = (aud) => ({ 'ttb': 'audience-ttb', 'PD ttb': 'audience-pd', 'PRU': 'audience-pru', 'Customer': 'audience-customer' }[aud] || 'audience-other');
 
-        const formatDateThai = (dateStr) => {
-            const d = new Date(dateStr);
-            return d.toLocaleDateString('th-TH', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
-        };
-        
-        const formatTime = (timeStr) => timeStr.substring(0, 5);
-
-        const getAudienceClass = (aud) => {
-            const map = { 'ttb': 'audience-ttb', 'PD ttb': 'audience-pd', 'PRU': 'audience-pru', 'Customer': 'audience-customer' };
-            return map[aud] || 'audience-other';
-        };
-
-        const getAudienceColor = (aud) => {
-            const map = { 'ttb': '#3b82f6', 'PD ttb': '#10b981', 'PRU': '#8b5cf6', 'Customer': '#f59e0b' };
-            return map[aud] || '#6b7280';
-        };
-
-        // ================= AUTHENTICATION =================
+        // ================= AUTH =================
         async function handleLogin(e) {
             e.preventDefault();
             showLoading(true);
             const inputId = document.getElementById('login-id').value.trim();
             const password = document.getElementById('login-password').value;
-            const errorDiv = document.getElementById('login-error');
-            
-            errorDiv.classList.add('hidden');
             let email = inputId;
 
             try {
-                // 1. ถ้าไม่ได้ใส่ Email (เช่นใส่ ttb_tt) ให้ไปค้น Email จาก Profile ก่อน
                 if (!inputId.includes('@')) {
-                    const { data: profile, error: pError } = await supabaseClient
-                        .from('profiles')
-                        .select('email')
-                        .eq('user_id_code', inputId)
-                        .single();
-                    
-                    if (pError || !profile) throw new Error("ไม่พบ User ID นี้ในระบบ");
-                    email = profile.email;
+                    const { data, error } = await supabaseClient.from('profiles').select('email').eq('user_id_code', inputId).single();
+                    if (error || !data) throw new Error("ไม่พบ User ID นี้");
+                    email = data.email;
                 }
-
-                // 2. Auth with Supabase
-                const { data, error } = await supabaseClient.auth.signInWithPassword({
-                    email: email,
-                    password: password
-                });
-
+                const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
                 if (error) throw error;
                 await initApp(data.user);
-
             } catch (err) {
-                console.error(err);
-                errorDiv.textContent = err.message === 'Invalid login credentials' ? 'รหัสผ่านไม่ถูกต้อง' : err.message;
-                errorDiv.classList.remove('hidden');
-                showLoading(false);
-            }
+                document.getElementById('login-error').textContent = err.message === 'Invalid login credentials' ? 'รหัสผ่านไม่ถูกต้อง' : err.message;
+                document.getElementById('login-error').classList.remove('hidden');
+            } finally { showLoading(false); }
         }
 
         async function initApp(user) {
             currentUser = user;
-            try {
-                // Load Profile
-                const { data: profile, error } = await supabaseClient
-                    .from('profiles')
-                    .select('*')
-                    .eq('id', user.id)
-                    .single();
-                
-                if (error) throw error;
-                userProfile = profile;
+            const { data: profile } = await supabaseClient.from('profiles').select('*').eq('id', user.id).single();
+            userProfile = profile;
+            
+            // Fetch all profiles for dropdowns/reports
+            const { data: profiles } = await supabaseClient.from('profiles').select('*');
+            allProfiles = profiles || [];
 
-                // Load All Profiles (for dropdowns/mapping) - Cached for session
-                const { data: profiles } = await supabaseClient
-                    .from('profiles')
-                    .select('id, display_name, full_name, role, team');
-                allProfiles = profiles || [];
+            document.getElementById('header-name').textContent = profile.display_name;
+            document.getElementById('header-role').textContent = profile.role.toUpperCase();
+            document.getElementById('header-avatar').textContent = (profile.display_name || 'U').substring(0,2);
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('app').classList.remove('hidden');
 
-                // UI Setup
-                document.getElementById('header-name').textContent = profile.display_name || profile.full_name;
-                document.getElementById('header-role').textContent = profile.role.toUpperCase();
-                document.getElementById('header-avatar').textContent = (profile.display_name || 'U').substring(0,2);
-                
-                document.getElementById('login-screen').classList.add('hidden');
-                document.getElementById('app').classList.remove('hidden');
-                
-                renderDashboard();
-            } catch (err) {
-                alert("เกิดข้อผิดพลาดในการโหลดข้อมูล: " + err.message);
-                supabaseClient.auth.signOut();
-            } finally {
-                showLoading(false);
+            // Show Admin-only menus
+            if(['admin', 'master'].includes(profile.role)) {
+                document.getElementById('nav-check').classList.remove('hidden');
             }
+
+            renderDashboard();
         }
 
         async function handleLogout() {
-            if(confirm('ต้องการออกจากระบบ?')) {
+            if(confirm('ยืนยันออกจากระบบ?')) {
                 await supabaseClient.auth.signOut();
                 window.location.reload();
             }
         }
 
-        // ================= 1. DASHBOARD =================
+        // ================= 1. DASHBOARD & HOME =================
         async function renderDashboard() {
             showLoading(true);
             setActiveNav('nav-home');
             
             const today = new Date().toISOString().split('T')[0];
-            const startOfMonth = new Date(); startOfMonth.setDate(1);
-            const endOfMonth = new Date(); endOfMonth.setMonth(endOfMonth.getMonth() + 1); endOfMonth.setDate(0);
-
-            // Query only relevant data
-            const { data: myTasks } = await supabaseClient
-                .from('tasks')
+            const { data: myTasks } = await supabaseClient.from('tasks')
                 .select('*')
                 .eq('trainer_id', currentUser.id)
-                .gte('date', startOfMonth.toISOString().split('T')[0])
-                .lte('date', endOfMonth.toISOString().split('T')[0])
-                .order('date');
-
+                .order('start_time');
+            
             const todayTasks = myTasks ? myTasks.filter(t => t.date === today) : [];
-            const onlineCount = myTasks ? myTasks.filter(t => t.format === 'Online').length : 0;
-            const f2fCount = myTasks ? myTasks.filter(t => t.format === 'F2F').length : 0;
-            const totalHours = myTasks ? myTasks.reduce((acc, t) => {
-                const s = parseInt(t.start_time.split(':')[0]);
-                const e = parseInt(t.end_time.split(':')[0]);
-                return acc + (e - s);
-            }, 0) : 0;
 
-            const html = `
+            document.getElementById('main-content').innerHTML = `
                 <div class="space-y-6">
                     <div>
                         <h2 class="text-xl font-bold text-slate-800">👋 สวัสดี, ${userProfile.display_name}</h2>
-                        <p class="text-xs text-slate-500">ภาพรวมเดือนนี้ (${startOfMonth.toLocaleDateString('th-TH', {month:'long'})})</p>
+                        <p class="text-xs text-slate-500">วันนี้คุณมี ${todayTasks.length} งาน</p>
                     </div>
 
-                    <!-- Stats Grid -->
-                    <div class="grid grid-cols-2 gap-3">
-                        <div class="bg-gradient-primary rounded-2xl p-4 text-white shadow-lg relative overflow-hidden">
-                            <i class="fa-solid fa-clock absolute -right-2 -bottom-2 text-6xl text-white opacity-10"></i>
-                            <p class="text-xs opacity-80">ชั่วโมงสอน</p>
-                            <p class="text-3xl font-bold mt-1">${totalHours}</p>
-                            <p class="text-[10px] mt-2 bg-white/20 inline-block px-2 py-0.5 rounded-full">${myTasks.length} คลาส</p>
-                        </div>
-                        <div class="space-y-3">
-                            <div class="bg-white p-3 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
-                                <div>
-                                    <p class="text-[10px] text-slate-400">Online</p>
-                                    <p class="text-xl font-bold text-emerald-600">${onlineCount}</p>
-                                </div>
-                                <div class="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600"><i class="fa-solid fa-video"></i></div>
-                            </div>
-                            <div class="bg-white p-3 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
-                                <div>
-                                    <p class="text-[10px] text-slate-400">F2F</p>
-                                    <p class="text-xl font-bold text-blue-600">${f2fCount}</p>
-                                </div>
-                                <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600"><i class="fa-solid fa-users"></i></div>
-                            </div>
+                    <!-- 1. Mini Calendar Home -->
+                    <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
+                        <div id="home-calendar" class="h-64"></div>
+                        <div class="flex items-center gap-2 mt-2 text-[10px] text-slate-400 justify-center">
+                            <span class="w-2 h-2 rounded-full bg-blue-500"></span> มีงาน
+                            <span class="w-2 h-2 rounded-full bg-red-500 ml-2"></span> ลา
                         </div>
                     </div>
 
-                    <!-- Today's Schedule -->
+                    <!-- Today's Tasks -->
                     <div>
-                        <div class="flex justify-between items-center mb-3">
-                            <h3 class="font-bold text-slate-700">วันนี้ (${todayTasks.length})</h3>
-                            <span class="text-xs text-slate-400">${formatDateThai(today)}</span>
-                        </div>
+                        <h3 class="font-bold text-slate-700 mb-3">งานวันนี้ (${formatDateThai(today)})</h3>
                         <div class="space-y-3">
                             ${todayTasks.length === 0 
-                                ? `<div class="bg-slate-50 rounded-xl p-6 text-center text-slate-400 text-sm border border-dashed border-slate-200">ไม่มีงานวันนี้ พักผ่อนได้เลย! ☕</div>` 
+                                ? `<div class="p-6 text-center text-slate-400 bg-slate-50 rounded-xl border border-dashed text-sm">ว่าง! ไม่มีงานวันนี้</div>`
                                 : todayTasks.map(t => renderTaskCard(t)).join('')}
-                        </div>
-                    </div>
-
-                    <!-- Quick Actions -->
-                     <div>
-                        <h3 class="font-bold text-slate-700 mb-3">เมนูด่วน</h3>
-                        <div class="grid grid-cols-4 gap-2">
-                             <button onclick="renderCreateTask()" class="flex flex-col items-center gap-2 bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
-                                <div class="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center"><i class="fa-solid fa-plus"></i></div>
-                                <span class="text-[10px] text-slate-600">สร้างงาน</span>
-                            </button>
-                             <button onclick="renderCalendar()" class="flex flex-col items-center gap-2 bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
-                                <div class="w-10 h-10 rounded-full bg-orange-50 text-orange-600 flex items-center justify-center"><i class="fa-solid fa-calendar-day"></i></div>
-                                <span class="text-[10px] text-slate-600">เช็คคิว</span>
-                            </button>
-                             <button onclick="generateLineReport()" class="flex flex-col items-center gap-2 bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
-                                <div class="w-10 h-10 rounded-full bg-green-50 text-green-600 flex items-center justify-center"><i class="fa-brands fa-line"></i></div>
-                                <span class="text-[10px] text-slate-600">ส่ง Line</span>
-                            </button>
-                             <button onclick="renderReports()" class="flex flex-col items-center gap-2 bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
-                                <div class="w-10 h-10 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center"><i class="fa-solid fa-file-export"></i></div>
-                                <span class="text-[10px] text-slate-600">Export</span>
-                            </button>
                         </div>
                     </div>
                 </div>
             `;
-            document.getElementById('main-content').innerHTML = html;
+
+            // Initialize Mini Calendar
+            const calEl = document.getElementById('home-calendar');
+            const events = myTasks.map(t => ({
+                id: t.id,
+                start: t.date,
+                display: 'background', // Shows as dot/highlight
+                backgroundColor: t.is_leave ? '#ef4444' : '#3b82f6',
+                classNames: ['cursor-pointer']
+            }));
+
+            homeCalendarInstance = new FullCalendar.Calendar(calEl, {
+                initialView: 'dayGridMonth',
+                locale: 'th',
+                headerToolbar: { left: 'prev', center: 'title', right: 'next' },
+                height: '100%',
+                events: events,
+                dateClick: function(info) {
+                    // Check if tasks exist on this date
+                    const tasksOnDate = myTasks.filter(t => t.date === info.dateStr);
+                    if (tasksOnDate.length > 0) {
+                        // Show details of first task (or list logic)
+                        openTaskDetail(tasksOnDate[0].id);
+                    } else {
+                        // 3. Click empty date -> Pop up template
+                        renderCreateTask(null, info.dateStr);
+                    }
+                }
+            });
+            homeCalendarInstance.render();
             showLoading(false);
         }
 
         function renderTaskCard(t) {
-            const isOwner = t.trainer_id === currentUser.id;
-            const canEdit = isOwner || ['admin', 'master'].includes(userProfile.role);
-            
             return `
             <div class="task-card bg-white p-4 border border-slate-100 ${getAudienceClass(t.audience)}" onclick="openTaskDetail('${t.id}')">
                 <div class="flex justify-between items-start">
                     <div>
                         <div class="flex items-center gap-2 mb-1">
-                            <span class="text-[10px] px-2 py-0.5 rounded-full ${t.format === 'Online' ? 'badge-online' : 'badge-f2f'}">${t.format}</span>
-                            <span class="text-xs text-slate-400 font-mono">${formatTime(t.start_time)} - ${formatTime(t.end_time)}</span>
+                            <span class="text-[10px] px-2 py-0.5 rounded-full ${t.format === 'Online' ? 'bg-emerald-100 text-emerald-600' : 'bg-blue-100 text-blue-600'}">${t.format}</span>
+                            <span class="text-xs text-slate-400 font-mono">${formatTime(t.start_time)}-${formatTime(t.end_time)}</span>
                         </div>
-                        <h4 class="font-bold text-slate-800 text-sm line-clamp-1">${t.is_leave ? '🌴 ' + t.leave_type : t.course_details}</h4>
-                        ${!t.is_leave ? `<p class="text-xs text-slate-500 mt-1"><i class="fa-solid fa-location-dot mr-1"></i>${t.location || 'ไม่ระบุ'}</p>` : ''}
+                        <h4 class="font-bold text-slate-800 text-sm">${t.is_leave ? '🌴 '+t.leave_type : t.course_details}</h4>
+                        ${!t.is_leave ? `<p class="text-xs text-slate-500 mt-1"><i class="fa-solid fa-location-dot mr-1"></i>${t.location || '-'}</p>` : ''}
                     </div>
-                    ${canEdit ? `<i class="fa-solid fa-ellipsis text-slate-300"></i>` : ''}
+                    <i class="fa-solid fa-chevron-right text-slate-300 text-xs"></i>
                 </div>
             </div>`;
         }
 
-        // ================= 2. CALENDAR =================
+        // ================= 2. MAIN CALENDAR =================
         async function renderCalendar() {
             showLoading(true);
             setActiveNav('nav-calendar');
-            
             document.getElementById('main-content').innerHTML = `
                 <div class="h-[calc(100vh-180px)] bg-white rounded-xl shadow-sm p-2">
-                    <div class="flex justify-end mb-2 gap-2">
-                        <select id="calendar-filter" class="text-xs border rounded p-1" onchange="refreshCalendar()">
-                            <option value="my">งานของฉัน</option>
-                            <option value="team" ${['admin', 'master'].includes(userProfile.role) ? '' : 'disabled'}>ทีม (Admin)</option>
-                            <option value="all">ทั้งหมด</option>
-                        </select>
-                    </div>
-                    <div id="calendar"></div>
-                </div>
-            `;
+                    <div id="full-calendar"></div>
+                </div>`;
 
-            const calendarEl = document.getElementById('calendar');
-            calendarInstance = new FullCalendar.Calendar(calendarEl, {
+            const calEl = document.getElementById('full-calendar');
+            calendarInstance = new FullCalendar.Calendar(calEl, {
                 initialView: 'dayGridMonth',
                 locale: 'th',
                 height: '100%',
-                headerToolbar: {
-                    left: 'prev',
-                    center: 'title',
-                    right: 'next'
-                },
-                events: async function(info, successCallback, failureCallback) {
-                    const filter = document.getElementById('calendar-filter').value;
-                    let query = supabaseClient.from('tasks').select('*, profiles(display_name)').gte('date', info.startStr).lte('date', info.endStr);
-                    
-                    if (filter === 'my') query = query.eq('trainer_id', currentUser.id);
-                    // 'team' and 'all' logic can be refined based on specific team needs
-
-                    const { data } = await query;
+                headerToolbar: { left: 'prev', center: 'title', right: 'next' },
+                events: async (info, success, failure) => {
+                    const { data } = await supabaseClient.from('tasks')
+                        .select('*, profiles(display_name)')
+                        .gte('date', info.startStr).lte('date', info.endStr);
                     
                     const events = data.map(t => ({
                         id: t.id,
-                        title: t.is_leave ? t.leave_type : `${t.profiles?.display_name || ''}: ${t.course_details}`,
+                        title: t.is_leave ? t.leave_type : `${t.profiles?.display_name}: ${t.course_details}`,
                         start: `${t.date}T${t.start_time}`,
                         end: `${t.date}T${t.end_time}`,
                         backgroundColor: t.is_leave ? '#ef4444' : getAudienceColor(t.audience),
                         borderColor: 'transparent',
                         extendedProps: t
                     }));
-                    successCallback(events);
+                    success(events);
                 },
-                eventClick: function(info) {
-                    openTaskDetail(info.event.id);
-                }
+                eventClick: (info) => openTaskDetail(info.event.id),
+                dateClick: (info) => renderCreateTask(null, info.dateStr) // 3. Empty date click -> Create
             });
             calendarInstance.render();
             showLoading(false);
         }
 
-        function refreshCalendar() {
-            if(calendarInstance) calendarInstance.refetchEvents();
-        }
-
-        // ================= 3. CREATE / EDIT TASK =================
-        async function renderCreateTask(taskId = null) {
-            setActiveNav('nav-create'); // Pseudo nav
+        // ================= 3. CREATE / EDIT TASK (V4 Requirements) =================
+        async function renderCreateTask(taskId = null, datePrefill = null) {
+            setActiveNav(''); // No active nav
             showLoading(true);
 
             let task = null;
@@ -450,17 +330,30 @@
                 task = data;
             }
 
-            // Trainer Options (Admin/Master can assign others)
-            let trainerOptions = '';
+            // 4. Create Menu Adjustments
+            let trainerInputHTML = '';
+            
             if (['admin', 'master'].includes(userProfile.role)) {
-                trainerOptions = `<div class="mb-4">
-                    <label class="label">ผู้สอน</label>
-                    <select id="task-trainer" class="input-rounded w-full px-4 py-3 bg-white text-sm">
-                        ${allProfiles.map(p => `<option value="${p.id}" ${task?.trainer_id === p.id ? 'selected' : ''}>${p.display_name} (${p.role})</option>`).join('')}
-                    </select>
-                </div>`;
+                // Admin/Master: Multiselect, Real Names, No Master, No Role
+                const eligibleTrainers = allProfiles
+                    .filter(p => p.role !== 'master') // Filter Master out
+                    .sort((a,b) => a.full_name.localeCompare(b.full_name));
+
+                trainerInputHTML = `
+                    <div class="mb-4">
+                        <label class="text-xs font-bold text-slate-500 ml-1">ผู้สอน (เลือกได้หลายคน)</label>
+                        <select id="task-trainer" multiple class="input-rounded w-full px-4 py-3 bg-white text-sm h-32">
+                            ${eligibleTrainers.map(p => `
+                                <option value="${p.id}" ${task && task.trainer_id === p.id ? 'selected' : ''}>
+                                    ${p.full_name}
+                                </option>
+                            `).join('')}
+                        </select>
+                        <p class="text-[10px] text-slate-400 mt-1">* กด Ctrl/Cmd ค้างเพื่อเลือกหลายคน</p>
+                    </div>`;
             } else {
-                trainerOptions = `<input type="hidden" id="task-trainer" value="${currentUser.id}">`;
+                // Trainer: Default self, hidden
+                trainerInputHTML = `<input type="hidden" id="task-trainer" value="${currentUser.id}">`;
             }
 
             const html = `
@@ -471,16 +364,15 @@
                     </div>
 
                     <form onsubmit="handleSaveTask(event, '${taskId || ''}')" class="space-y-4">
-                        ${trainerOptions}
+                        ${trainerInputHTML}
 
-                        <!-- Toggle Leave -->
-                         <div class="flex items-center gap-3 mb-2 bg-slate-50 p-3 rounded-xl">
-                            <input type="checkbox" id="is-leave" onchange="toggleLeaveMode()" ${task?.is_leave ? 'checked' : ''} class="w-5 h-5 text-blue-600 rounded">
+                        <div class="flex items-center gap-3 mb-2 bg-slate-50 p-3 rounded-xl">
+                            <input type="checkbox" id="is-leave" onchange="toggleLeaveMode()" ${task?.is_leave ? 'checked' : ''} class="w-5 h-5">
                             <label for="is-leave" class="text-sm font-medium text-slate-700">บันทึกเป็นวันลา / วันหยุด</label>
                         </div>
 
                         <div id="leave-fields" class="${task?.is_leave ? '' : 'hidden'}">
-                             <label class="block text-xs font-bold text-slate-500 mb-1 ml-1">ประเภทวันลา</label>
+                             <label class="text-xs font-bold text-slate-500 ml-1">ประเภทวันลา</label>
                              <select id="leave-type" class="input-rounded w-full px-4 py-3 bg-white text-sm">
                                 <option value="Annual leave">Annual Leave (ลาพักร้อน)</option>
                                 <option value="Sick leave">Sick Leave (ลาป่วย)</option>
@@ -489,38 +381,9 @@
                         </div>
 
                         <div id="work-fields" class="${task?.is_leave ? 'hidden' : ''} space-y-4">
+                            <!-- 4. Reordered: Audience first, then Course Details -->
                             <div>
-                                <label class="block text-xs font-bold text-slate-500 mb-1 ml-1">หลักสูตร / รายละเอียด</label>
-                                <input type="text" id="course-details" value="${task?.course_details || ''}" class="input-rounded w-full px-4 py-3 bg-white text-sm" placeholder="เช่น Orientation New Staff">
-                            </div>
-
-                            <div class="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label class="block text-xs font-bold text-slate-500 mb-1 ml-1">วันที่</label>
-                                    <input type="date" id="date" value="${task?.date || new Date().toISOString().split('T')[0]}" required class="input-rounded w-full px-4 py-3 bg-white text-sm">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-bold text-slate-500 mb-1 ml-1">Format</label>
-                                    <select id="format" class="input-rounded w-full px-4 py-3 bg-white text-sm">
-                                        <option value="Online" ${task?.format === 'Online' ? 'selected' : ''}>Online</option>
-                                        <option value="F2F" ${task?.format === 'F2F' ? 'selected' : ''}>Face to Face</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label class="block text-xs font-bold text-slate-500 mb-1 ml-1">เริ่ม</label>
-                                    <input type="time" id="start-time" value="${task?.start_time?.substring(0,5) || '09:00'}" required class="input-rounded w-full px-4 py-3 bg-white text-sm">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-bold text-slate-500 mb-1 ml-1">จบ</label>
-                                    <input type="time" id="end-time" value="${task?.end_time?.substring(0,5) || '17:00'}" required class="input-rounded w-full px-4 py-3 bg-white text-sm">
-                                </div>
-                            </div>
-
-                            <div>
-                                <label class="block text-xs font-bold text-slate-500 mb-1 ml-1">Audience (กลุ่มเป้าหมาย)</label>
+                                <label class="text-xs font-bold text-slate-500 ml-1">Audience (กลุ่มเป้าหมาย)</label>
                                 <select id="audience" class="input-rounded w-full px-4 py-3 bg-white text-sm">
                                     <option value="ttb" ${task?.audience === 'ttb' ? 'selected' : ''}>ttb</option>
                                     <option value="PD ttb" ${task?.audience === 'PD ttb' ? 'selected' : ''}>PD ttb</option>
@@ -531,8 +394,38 @@
                             </div>
 
                             <div>
-                                <label class="block text-xs font-bold text-slate-500 mb-1 ml-1">สถานที่ / Link</label>
-                                <input type="text" id="location" value="${task?.location || ''}" class="input-rounded w-full px-4 py-3 bg-white text-sm" placeholder="ห้องประชุม หรือ MS Teams Link">
+                                <label class="text-xs font-bold text-slate-500 ml-1">หลักสูตร / รายละเอียด</label>
+                                <input type="text" id="course-details" value="${task?.course_details || ''}" class="input-rounded w-full px-4 py-3 bg-white text-sm" placeholder="ระบุชื่อหลักสูตร">
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="text-xs font-bold text-slate-500 ml-1">วันที่</label>
+                                    <input type="date" id="date" value="${task?.date || datePrefill || new Date().toISOString().split('T')[0]}" required class="input-rounded w-full px-4 py-3 bg-white text-sm">
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-slate-500 ml-1">รูปแบบ</label>
+                                    <select id="format" class="input-rounded w-full px-4 py-3 bg-white text-sm">
+                                        <option value="Online" ${task?.format === 'Online' ? 'selected' : ''}>Online</option>
+                                        <option value="F2F" ${task?.format === 'F2F' ? 'selected' : ''}>Face to Face</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="text-xs font-bold text-slate-500 ml-1">เวลาเริ่ม</label>
+                                    <input type="time" id="start-time" value="${task?.start_time?.substring(0,5) || '09:00'}" required class="input-rounded w-full px-4 py-3 bg-white text-sm">
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-slate-500 ml-1">เวลาจบ</label>
+                                    <input type="time" id="end-time" value="${task?.end_time?.substring(0,5) || '17:00'}" required class="input-rounded w-full px-4 py-3 bg-white text-sm">
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="text-xs font-bold text-slate-500 ml-1">สถานที่ / Link</label>
+                                <input type="text" id="location" value="${task?.location || ''}" class="input-rounded w-full px-4 py-3 bg-white text-sm">
                             </div>
                         </div>
 
@@ -544,7 +437,7 @@
                 </div>
             `;
             document.getElementById('main-content').innerHTML = html;
-            if(task?.is_leave) toggleLeaveMode(); // Initialize state
+            if(task?.is_leave) toggleLeaveMode();
             showLoading(false);
         }
 
@@ -558,208 +451,362 @@
             e.preventDefault();
             showLoading(true);
 
-            const isLeave = document.getElementById('is-leave').checked;
-            const payload = {
-                trainer_id: document.getElementById('task-trainer').value,
+            // Get selected trainers (Handle multiselect for admins)
+            const trainerSelect = document.getElementById('task-trainer');
+            let selectedTrainers = [];
+            if (trainerSelect.tagName === 'SELECT') {
+                selectedTrainers = Array.from(trainerSelect.selectedOptions).map(opt => opt.value);
+            } else {
+                selectedTrainers = [trainerSelect.value];
+            }
+
+            if(selectedTrainers.length === 0) { alert('กรุณาเลือกผู้สอน'); showLoading(false); return; }
+
+            const basePayload = {
                 date: document.getElementById('date').value,
                 start_time: document.getElementById('start-time').value,
                 end_time: document.getElementById('end-time').value,
-                is_leave: isLeave,
+                is_leave: document.getElementById('is-leave').checked,
                 created_by: currentUser.id
             };
 
-            if (isLeave) {
-                payload.leave_type = document.getElementById('leave-type').value;
-                payload.course_details = null;
-                payload.format = null;
-                payload.audience = null;
-                payload.location = null;
+            if (basePayload.is_leave) {
+                basePayload.leave_type = document.getElementById('leave-type').value;
             } else {
-                payload.leave_type = null;
-                payload.course_details = document.getElementById('course-details').value;
-                payload.format = document.getElementById('format').value;
-                payload.audience = document.getElementById('audience').value;
-                payload.location = document.getElementById('location').value;
+                basePayload.course_details = document.getElementById('course-details').value;
+                basePayload.format = document.getElementById('format').value;
+                basePayload.audience = document.getElementById('audience').value;
+                basePayload.location = document.getElementById('location').value;
             }
 
             try {
                 if (taskId) {
-                    const { error } = await supabaseClient.from('tasks').update(payload).eq('id', taskId);
+                    // Update single task
+                    const { error } = await supabaseClient.from('tasks').update(basePayload).eq('id', taskId);
                     if (error) throw error;
                 } else {
-                    const { error } = await supabaseClient.from('tasks').insert([payload]);
+                    // Insert tasks for ALL selected trainers
+                    const inserts = selectedTrainers.map(tid => ({ ...basePayload, trainer_id: tid }));
+                    const { error } = await supabaseClient.from('tasks').insert(inserts);
                     if (error) throw error;
                 }
-                alert('บันทึกเรียบร้อย ✅');
+                alert('บันทึกเรียบร้อย');
                 renderDashboard();
-            } catch (err) {
-                alert('Error: ' + err.message);
-            } finally {
-                showLoading(false);
-            }
+            } catch (err) { alert(err.message); } 
+            finally { showLoading(false); }
         }
 
         async function deleteTask(taskId) {
-            if(!confirm('ยืนยันที่จะลบงานนี้?')) return;
-            showLoading(true);
-            const { error } = await supabaseClient.from('tasks').delete().eq('id', taskId);
-            if(error) alert('ลบไม่สำเร็จ: ' + error.message);
-            else {
-                alert('ลบเรียบร้อย');
+            if(confirm('ลบงานนี้?')) {
+                await supabaseClient.from('tasks').delete().eq('id', taskId);
                 renderDashboard();
             }
-            showLoading(false);
         }
 
-        async function openTaskDetail(taskId) {
-            // Re-use renderCreateTask logic but check permissions first
-            renderCreateTask(taskId);
-        }
+        function openTaskDetail(taskId) { renderCreateTask(taskId); }
 
-        // ================= 4. REPORTS (Line & Export) =================
-        async function renderReports() {
-            setActiveNav('nav-reports');
+        // ================= 5. CHECK AVAILABILITY (Admin Only) =================
+        function renderAvailabilityCheck() {
+            setActiveNav('nav-check');
             const html = `
-                <div class="space-y-4">
-                     <h2 class="text-xl font-bold text-slate-800">📊 รายงาน & Export</h2>
-                     
-                     <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
-                        <h3 class="font-bold text-green-600 mb-2"><i class="fa-brands fa-line mr-2"></i>Line Report</h3>
-                        <p class="text-xs text-slate-500 mb-3">สร้างข้อความสรุปงานวันพรุ่งนี้เพื่อส่งเข้ากลุ่ม Line</p>
-                        <button onclick="generateLineReport()" class="w-full py-2 bg-green-50 text-green-600 rounded-lg text-sm font-bold">สร้างข้อความ</button>
-                     </div>
-
-                     <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
-                        <h3 class="font-bold text-blue-600 mb-2"><i class="fa-solid fa-file-excel mr-2"></i>Export Excel</h3>
-                        <div class="flex gap-2">
-                            <input type="month" id="export-month" value="${new Date().toISOString().substring(0,7)}" class="border rounded p-2 text-sm flex-1">
-                            <button onclick="exportExcel()" class="bg-blue-600 text-white px-4 rounded-lg text-sm">Download</button>
+                <div class="space-y-6">
+                    <h2 class="text-xl font-bold text-slate-800">🔍 ตรวจสอบวันว่างทีม</h2>
+                    
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 space-y-4">
+                        <!-- 5.1 Select Users -->
+                        <div>
+                            <label class="text-xs font-bold text-slate-500 ml-1">1. เลือกกลุ่มเป้าหมาย</label>
+                            <select id="av-group" class="input-rounded w-full px-4 py-3 bg-white text-sm mb-2" onchange="toggleAvUserSelect()">
+                                <option value="all">ทุกคน (All)</option>
+                                <option value="specialist">Training Specialist</option>
+                                <option value="mandatory">Mandatory</option>
+                                <option value="select">เลือกรายบุคคล...</option>
+                            </select>
+                            
+                            <div id="av-specific-users" class="hidden p-3 bg-slate-50 rounded-xl max-h-40 overflow-y-auto">
+                                ${allProfiles.filter(p => p.role !== 'master').map(p => `
+                                    <label class="flex items-center gap-2 mb-2 text-sm">
+                                        <input type="checkbox" value="${p.id}" class="av-user-cb"> ${p.full_name}
+                                    </label>
+                                `).join('')}
+                            </div>
                         </div>
-                     </div>
+
+                        <!-- 5.2 Select Time Logic -->
+                        <div>
+                            <label class="text-xs font-bold text-slate-500 ml-1">2. เงื่อนไขเวลา</label>
+                            <select id="av-mode" class="input-rounded w-full px-4 py-3 bg-white text-sm" onchange="toggleAvDateInput()">
+                                <option value="earliest">เร็วที่สุด (Earliest)</option>
+                                <option value="month">ดูทั้งเดือน (Select Month)</option>
+                            </select>
+                            
+                            <input type="month" id="av-month-picker" class="hidden mt-2 input-rounded w-full px-4 py-3 bg-white text-sm" 
+                                   min="${new Date().toISOString().substring(0,7)}">
+                        </div>
+
+                        <button onclick="runAvailabilityCheck()" class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl shadow-lg">
+                            ค้นหา
+                        </button>
+                    </div>
+
+                    <div id="av-result" class="hidden bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
+                        <!-- Results here -->
+                    </div>
                 </div>
             `;
             document.getElementById('main-content').innerHTML = html;
         }
 
+        function toggleAvUserSelect() {
+            const mode = document.getElementById('av-group').value;
+            document.getElementById('av-specific-users').classList.toggle('hidden', mode !== 'select');
+        }
+        function toggleAvDateInput() {
+            const mode = document.getElementById('av-mode').value;
+            document.getElementById('av-month-picker').classList.toggle('hidden', mode !== 'month');
+        }
+
+        async function runAvailabilityCheck() {
+            showLoading(true);
+            const groupMode = document.getElementById('av-group').value;
+            const timeMode = document.getElementById('av-mode').value;
+            
+            // Get Target User IDs
+            let targetIds = [];
+            if (groupMode === 'all') targetIds = allProfiles.filter(p => p.role !== 'master').map(p => p.id);
+            else if (groupMode === 'specialist') targetIds = allProfiles.filter(p => p.team === 'Training Specialist').map(p => p.id);
+            else if (groupMode === 'mandatory') targetIds = allProfiles.filter(p => p.team === 'Mandatory').map(p => p.id);
+            else targetIds = Array.from(document.querySelectorAll('.av-user-cb:checked')).map(cb => cb.value);
+
+            if(targetIds.length === 0) { alert('เลือกคนก่อนครับ'); showLoading(false); return; }
+
+            // Define Date Range
+            let startDate = new Date();
+            let endDate = new Date();
+            
+            if (timeMode === 'month') {
+                const mVal = document.getElementById('av-month-picker').value;
+                if(!mVal) { alert('เลือกเดือนด้วยครับ'); showLoading(false); return; }
+                startDate = new Date(mVal + '-01');
+                endDate = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0);
+            } else {
+                // Earliest: Look ahead 60 days
+                endDate.setDate(startDate.getDate() + 60);
+            }
+
+            // Fetch Tasks
+            const { data: tasks } = await supabaseClient.from('tasks')
+                .select('date, trainer_id')
+                .in('trainer_id', targetIds)
+                .gte('date', startDate.toISOString().split('T')[0])
+                .lte('date', endDate.toISOString().split('T')[0]);
+
+            // Calculate Availability
+            const busyMap = {}; // date -> Set(trainerIds)
+            tasks.forEach(t => {
+                if(!busyMap[t.date]) busyMap[t.date] = new Set();
+                busyMap[t.date].add(t.trainer_id);
+            });
+
+            const resultContainer = document.getElementById('av-result');
+            resultContainer.innerHTML = '<h3 class="font-bold mb-3">ผลการค้นหา</h3>';
+            resultContainer.classList.remove('hidden');
+
+            let found = false;
+            let current = new Date(startDate);
+            
+            if (timeMode === 'earliest') {
+                while (current <= endDate) {
+                    const dateStr = current.toISOString().split('T')[0];
+                    const busyCount = busyMap[dateStr] ? busyMap[dateStr].size : 0;
+                    
+                    // Logic: "Free" means NONE of the selected users have work? Or at least one?
+                    // Usually "Team Check" means "Can we ALL meet?". Let's assume Intersection (All must be free).
+                    // If any selected user has a task, that day is busy for the "Team".
+                    
+                    // Actually, if busyCount === 0, everyone is free.
+                    // But wait, if I select 5 people, and busyMap has 1 person, that day is not free for the whole group.
+                    
+                    // Simple logic: Is there any conflict?
+                    const conflictUsers = busyMap[dateStr] || new Set();
+                    const isConflict = [...conflictUsers].some(uid => targetIds.includes(uid));
+
+                    if (!isConflict && current.getDay() !== 0 && current.getDay() !== 6) { // Skip weekends
+                        resultContainer.innerHTML += `
+                            <div class="p-4 bg-green-50 border border-green-200 rounded-xl text-center">
+                                <p class="text-green-800 font-bold text-lg">ว่างเร็วที่สุด!</p>
+                                <p class="text-3xl font-bold text-green-600 my-2">${formatDateThai(dateStr)}</p>
+                                <p class="text-xs text-green-600">ว่างพร้อมกันทั้ง ${targetIds.length} คน</p>
+                            </div>`;
+                        found = true;
+                        break;
+                    }
+                    current.setDate(current.getDate() + 1);
+                }
+            } else {
+                // List all free days in month
+                let freeDaysHtml = '<div class="grid grid-cols-4 gap-2">';
+                while (current <= endDate) {
+                    const dateStr = current.toISOString().split('T')[0];
+                    const conflictUsers = busyMap[dateStr] || new Set();
+                    const isConflict = [...conflictUsers].some(uid => targetIds.includes(uid));
+
+                    if (!isConflict && current.getDay() !== 0 && current.getDay() !== 6) {
+                        freeDaysHtml += `<div class="p-2 bg-green-100 text-green-700 rounded-lg text-center text-xs font-bold">${current.getDate()}</div>`;
+                        found = true;
+                    }
+                    current.setDate(current.getDate() + 1);
+                }
+                freeDaysHtml += '</div>';
+                resultContainer.innerHTML += found ? freeDaysHtml : '<p>ไม่พบวันว่างในเดือนนี้</p>';
+            }
+
+            if (!found && timeMode === 'earliest') resultContainer.innerHTML += '<p class="text-red-500 text-center">ไม่พบวันว่างในช่วง 60 วันนี้</p>';
+            showLoading(false);
+        }
+
+        // ================= 6. REPORTS & DASHBOARD =================
+        async function renderReports() {
+            setActiveNav('nav-reports');
+            showLoading(true);
+
+            // 6. Dashboard Analytics Data
+            const { data: allTasks } = await supabaseClient.from('tasks').select('*');
+            
+            // Calc stats
+            const totalTasks = allTasks.length;
+            const totalHours = allTasks.reduce((acc, t) => acc + (parseInt(t.end_time) - parseInt(t.start_time)), 0);
+            
+            // Workload Density per Trainer
+            const workload = {};
+            allTasks.forEach(t => { workload[t.trainer_id] = (workload[t.trainer_id] || 0) + 1; });
+            
+            const trainerLabels = [];
+            const trainerData = [];
+            allProfiles.filter(p => p.role !== 'master').forEach(p => {
+                trainerLabels.push(p.display_name);
+                trainerData.push(workload[p.id] || 0);
+            });
+
+            document.getElementById('main-content').innerHTML = `
+                <div class="space-y-6">
+                    <h2 class="text-xl font-bold text-slate-800">📊 Team Dashboard</h2>
+                    
+                    <!-- KPI Cards -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-blue-50 p-4 rounded-xl text-center">
+                            <p class="text-xs text-blue-500">Total Classes</p>
+                            <p class="text-2xl font-bold text-blue-700">${totalTasks}</p>
+                        </div>
+                        <div class="bg-emerald-50 p-4 rounded-xl text-center">
+                            <p class="text-xs text-emerald-500">Total Hours</p>
+                            <p class="text-2xl font-bold text-emerald-700">${totalHours}</p>
+                        </div>
+                    </div>
+
+                    <!-- 2. Workload Density Chart -->
+                    <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
+                        <h3 class="text-sm font-bold text-slate-700 mb-2">Workload Density (งานต่อคน)</h3>
+                        <canvas id="densityChart"></canvas>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="space-y-3">
+                        <button onclick="generateLineReport()" class="w-full py-3 bg-green-500 text-white rounded-xl font-bold shadow-md">
+                            <i class="fa-brands fa-line mr-2"></i> Generate Line Report
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            new Chart(document.getElementById('densityChart'), {
+                type: 'bar',
+                data: {
+                    labels: trainerLabels,
+                    datasets: [{
+                        label: 'จำนวนงาน',
+                        data: trainerData,
+                        backgroundColor: 'rgba(59, 130, 246, 0.6)',
+                        borderRadius: 4
+                    }]
+                },
+                options: { scales: { y: { beginAtZero: true } } }
+            });
+
+            showLoading(false);
+        }
+
         async function generateLineReport() {
             showLoading(true);
-            // Logic: Get tasks for tomorrow
-            const tomorrow = new Date();
-            tomorrow.setDate(tomorrow.getDate() + 1);
+            const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
             const dateStr = tomorrow.toISOString().split('T')[0];
             
-            const { data: tasks } = await supabaseClient
-                .from('tasks')
-                .select('*, profiles(full_name, role, team)')
-                .eq('date', dateStr);
+            const { data: tasks } = await supabaseClient.from('tasks').select('*, profiles(full_name, display_name, role, team)').eq('date', dateStr);
 
-            // Group by Team/Person
-            const dayName = tomorrow.toLocaleDateString('th-TH', {weekday:'long', day:'numeric', month:'short'});
-            let msg = `🗓️ ${dayName}\n\n💙🧡 ttb Team 🧡💙\n.........................................\n`;
-            
-            // Helper to list tasks
-            const listTasks = (teamName) => {
+            const dayThai = tomorrow.toLocaleDateString('th-TH', {weekday:'long', day:'numeric', month:'short'});
+            let msg = `🗓️ ${dayThai}\n\n💙🧡 ttb Team 🧡💙\n.........................................\n`;
+
+            // Custom Sorting: Thanayot -> Yannapat -> Others
+            // Also filter OUT Alongkorn
+            const sortAndFilter = (list) => {
+                return list
+                    .filter(p => !p.full_name.includes('อลงกรณ์') && !p.display_name.includes('Korn')) // Remove Alongkorn
+                    .sort((a, b) => {
+                        const score = (name) => {
+                            if (name.includes('Thanayot') || name.includes('ธนยศ')) return 1;
+                            if (name.includes('Yannapat') || name.includes('ญานภัทร')) return 2;
+                            return 99;
+                        };
+                        const scoreA = score(a.full_name);
+                        const scoreB = score(b.full_name);
+                        if(scoreA !== scoreB) return scoreA - scoreB;
+                        return a.full_name.localeCompare(b.full_name);
+                    });
+            };
+
+            const printSection = (teamName) => {
                 msg += `🌟 ${teamName}\n`;
-                // Filter users in this team from AllProfiles to ensure everyone is listed even if no tasks
-                const teamMembers = allProfiles.filter(p => p.team === teamName);
+                let members = allProfiles.filter(p => p.team === teamName);
+                members = sortAndFilter(members);
                 
-                teamMembers.forEach(m => {
+                members.forEach(m => {
                     const userTasks = tasks ? tasks.filter(t => t.trainer_id === m.id) : [];
-                    // Extract Nickname (heuristic: last word in full name or display name)
-                    const nickname = m.display_name; 
-                    msg += `● ${m.full_name} (${nickname})\n`;
+                    msg += `● ${m.full_name} (${m.display_name})\n`;
                     if(userTasks.length > 0) {
                         userTasks.forEach(t => {
                             if(t.is_leave) msg += `- ${t.leave_type}\n`;
                             else msg += `- ${t.audience}:(${t.format}) ${t.course_details} (${formatTime(t.start_time)}-${formatTime(t.end_time)})\n`;
                         });
                     }
-                    msg += `\n`; // Spacer
+                    msg += `\n`;
                 });
                 msg += `.........................................\n`;
-            };
+            }
 
-            listTasks('Training Specialist');
-            listTasks('Mandatory');
+            printSection('Training Specialist');
+            printSection('Mandatory');
 
-            // Show Modal with Copy Button
             const modalHtml = `
                 <div class="p-4">
                     <h3 class="font-bold mb-2">Line Report</h3>
                     <textarea class="w-full h-64 text-xs border rounded p-2 bg-slate-50 font-mono" readonly>${msg}</textarea>
                     <div class="flex gap-2 mt-2">
-                        <button onclick="navigator.clipboard.writeText(document.querySelector('textarea').value); alert('คัดลอกแล้ว!');" class="flex-1 bg-green-500 text-white py-2 rounded-lg">คัดลอก</button>
-                        <button onclick="document.getElementById('modal-container').classList.add('hidden')" class="flex-1 bg-slate-200 py-2 rounded-lg">ปิด</button>
+                        <button onclick="navigator.clipboard.writeText(document.querySelector('textarea').value); alert('คัดลอกแล้ว');" class="flex-1 bg-green-500 text-white py-2 rounded-lg">Copy</button>
+                        <button onclick="document.getElementById('modal-container').classList.add('hidden')" class="flex-1 bg-slate-200 py-2 rounded-lg">Close</button>
                     </div>
-                </div>
-            `;
+                </div>`;
             document.getElementById('modal-content').innerHTML = modalHtml;
             document.getElementById('modal-container').classList.remove('hidden');
             showLoading(false);
         }
 
-        async function exportExcel() {
-            showLoading(true);
-            const monthStr = document.getElementById('export-month').value;
-            const start = monthStr + '-01';
-            const end = monthStr + '-31';
-
-            const { data } = await supabaseClient
-                .from('tasks')
-                .select('date, start_time, end_time, format, audience, course_details, location, is_leave, leave_type, profiles(display_name, team)')
-                .gte('date', start)
-                .lte('date', end)
-                .order('date');
-
-            if(!data || data.length === 0) { alert('ไม่มีข้อมูล'); showLoading(false); return; }
-
-            const ws_data = data.map(t => ({
-                Date: t.date,
-                Trainer: t.profiles.display_name,
-                Team: t.profiles.team,
-                Time: `${t.start_time}-${t.end_time}`,
-                Format: t.is_leave ? 'LEAVE' : t.format,
-                Topic: t.is_leave ? t.leave_type : t.course_details,
-                Audience: t.audience,
-                Location: t.location
-            }));
-
-            const ws = XLSX.utils.json_to_sheet(ws_data);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Report");
-            XLSX.writeFile(wb, `Trainer_Report_${monthStr}.xlsx`);
-            showLoading(false);
-        }
-
-        // ================= PROFILE =================
-        function renderProfile() {
-            setActiveNav('nav-profile');
-            document.getElementById('main-content').innerHTML = `
-                <div class="max-w-sm mx-auto bg-white rounded-2xl shadow-sm p-6 text-center border border-slate-100 mt-10">
-                    <div class="w-24 h-24 rounded-full bg-slate-100 mx-auto mb-4 flex items-center justify-center text-3xl font-bold text-slate-400">
-                        ${(userProfile.display_name || 'U').substring(0,2)}
-                    </div>
-                    <h2 class="text-xl font-bold text-slate-800">${userProfile.full_name}</h2>
-                    <p class="text-slate-500 mb-4">${userProfile.email}</p>
-                    <div class="inline-block px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-xs font-bold mb-6">
-                        ${userProfile.team || 'No Team'}
-                    </div>
-                    
-                    <button onclick="handleLogout()" class="w-full py-3 border border-red-100 text-red-500 rounded-xl hover:bg-red-50 transition-colors">
-                        ออกจากระบบ
-                    </button>
-                    <p class="text-[10px] text-slate-300 mt-6">v3.1 Production Build</p>
-                </div>
-            `;
-        }
-
         // Init
-        const session = supabaseClient.auth.getSession().then(({ data: { session } }) => {
+        supabaseClient.auth.getSession().then(({ data: { session } }) => {
             if (session) initApp(session.user);
-            else document.getElementById('login-screen').classList.remove('hidden');
         });
 
     </script>
 </body>
 </html>
+
 
