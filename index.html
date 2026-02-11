@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ttb Trainer Task V4.5 (Full)</title>
+    <title>ttb Trainer Task V4.6</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -19,15 +19,38 @@
         .input-rounded:focus { border-color: #0056b3; box-shadow: 0 0 0 3px rgba(0, 86, 179, 0.1); outline: none; }
         .loader { border: 3px solid #f3f3f3; border-radius: 50%; border-top: 3px solid #002d63; width: 32px; height: 32px; animation: spin 1s linear infinite; }
         
-        /* Calendar Specifics */
+        /* Calendar Specifics for Grid Layout */
         .fc { font-size: 0.8em; }
         .fc-toolbar-title { font-size: 1.1em !important; font-weight: 600; color: #1e293b; }
-        .fc-daygrid-day-frame { min-height: 80px !important; cursor: pointer; transition: background 0.2s; }
+        .fc-daygrid-day-frame { min-height: 85px !important; cursor: pointer; transition: background 0.2s; position: relative; }
         .fc-daygrid-day-frame:active { background-color: #f1f5f9; }
         .fc-day-today { background-color: #f0f9ff !important; }
-        .fc-daygrid-day-events { display: flex; flex-wrap: wrap; gap: 2px; justify-content: center; padding: 2px; }
-        .fc-h-event { background: none; border: none; }
-        .fc-event-main { display: none; } 
+        
+        /* Custom Event Container to handle grid */
+        .fc-event { background: none !important; border: none !important; box-shadow: none !important; margin: 0 !important; }
+        .fc-daygrid-day-events { margin: 0 !important; padding: 2px !important; }
+        
+        /* Avatar Grid Styling inside Calendar */
+        .avatar-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr); /* 3 icons per row */
+            gap: 2px;
+            width: 100%;
+            padding-top: 2px;
+        }
+        .avatar-icon {
+            width: 20px; 
+            height: 20px; 
+            border-radius: 50%; 
+            font-size: 8px; 
+            font-weight: bold; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            color: white;
+            border: 1px solid white;
+            margin: 0 auto; /* Center in grid cell */
+        }
 
         /* Custom Task Card */
         .task-card { transition: all 0.2s; border-left-width: 4px; border-radius: 0.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
@@ -57,15 +80,12 @@
         let calendarInstance = null;
         let dashboardChart = null;
 
-        // Helper: Get Initials (First char of Name + First char of Surname)
+        // Helper: Get Initials
         const getAvatarInitials = (fullName) => {
             if(!fullName) return 'U';
-            const cleanName = fullName.replace(/\(.*\)/, '').trim(); // Remove nickname inside ()
+            const cleanName = fullName.replace(/\(.*\)/, '').trim();
             const parts = cleanName.split(/\s+/);
-            if (parts.length >= 2) {
-                // Return 1st char of Firstname + 1st char of Lastname
-                return (parts[0][0] + parts[1][0]).toUpperCase();
-            }
+            if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
             return parts[0].substring(0, 2).toUpperCase();
         };
 
@@ -79,7 +99,7 @@
     <!-- LOGIN SCREEN -->
     <div id="login-screen" class="min-h-screen flex flex-col justify-center items-center p-8 bg-white absolute inset-0 z-[100]">
         <div class="w-20 h-20 rounded-2xl bg-gradient-primary flex items-center justify-center text-white font-bold text-3xl shadow-xl mb-6">ttb</div>
-        <h2 class="text-xl font-bold text-slate-800 mb-1">Trainer Task V4.5</h2>
+        <h2 class="text-xl font-bold text-slate-800 mb-1">Trainer Task V4.6</h2>
         <p class="text-slate-400 text-xs mb-8 text-center">ระบบบริหารจัดการงานสอน</p>
         <form id="login-form" class="w-full max-w-sm space-y-4" onsubmit="handleLogin(event)">
             <input type="text" id="login-id" required class="input-rounded w-full px-5 py-3.5 bg-slate-50 text-sm" placeholder="User ID หรือ Email">
@@ -210,7 +230,7 @@
                 const totalTasks = monthTasks.length;
                 const f2fCount = monthTasks.filter(t => t.format === 'F2F').length;
                 const onlineCount = monthTasks.filter(t => t.format === 'Online').length;
-                const totalHours = monthTasks.reduce((acc, t) => { if (t.is_leave || !t.format) return acc; const h1 = parseInt(t.start_time.split(':')[0]); const h2 = parseInt(t.end_time.split(':')[0]); return acc + (h2 - h1); }, 0);
+                const totalHours = monthTasks.reduce((acc, t) => { if (t.is_leave || !t.format || t.format === '') return acc; const h1 = parseInt(t.start_time.split(':')[0]); const h2 = parseInt(t.end_time.split(':')[0]); return acc + (h2 - h1); }, 0);
                 const weeks = [0, 0, 0, 0, 0];
                 monthTasks.forEach(t => { const d = new Date(t.date); const weekNum = Math.floor((d.getDate() - 1) / 7); if(weeks[weekNum] !== undefined) weeks[weekNum]++; });
 
@@ -237,15 +257,18 @@
         }
 
         function renderTaskCard(t, showTrainer = false) {
-            const timeDisplay = (!t.format) ? 'ไม่ระบุเวลา' : `${formatTime(t.start_time)}-${formatTime(t.end_time)}`;
+            const timeDisplay = (!t.format || t.format === '') ? '' : `${formatTime(t.start_time)}-${formatTime(t.end_time)}`;
             const trainerName = t.profiles ? t.profiles.display_name : 'Unknown';
+            const audienceText = (!t.audience || t.audience === '') ? '' : ''; // Don't show text if empty
+            const formatText = (!t.format || t.format === '') ? '' : t.format;
+            
             return `
             <div class="task-card bg-white p-4 border border-slate-100 ${getAudienceClass(t.audience)}" onclick="renderCreateTask('${t.id}')">
                 <div class="flex justify-between items-start">
                     <div>
                         <div class="flex items-center gap-2 mb-1">
-                            ${t.format ? `<span class="text-[10px] px-2 py-0.5 rounded-full ${t.format==='Online'?'bg-emerald-100 text-emerald-600':'bg-blue-100 text-blue-600'}">${t.format}</span>` : ''}
-                            <span class="text-xs text-slate-400 font-mono">${timeDisplay}</span>
+                            ${formatText ? `<span class="text-[10px] px-2 py-0.5 rounded-full ${t.format==='Online'?'bg-emerald-100 text-emerald-600':'bg-blue-100 text-blue-600'}">${formatText}</span>` : ''}
+                            ${timeDisplay ? `<span class="text-xs text-slate-400 font-mono">${timeDisplay}</span>` : ''}
                         </div>
                         <h4 class="font-bold text-slate-800 text-sm">${t.is_leave ? '🌴 '+t.leave_type : t.course_details}</h4>
                         ${showTrainer ? `<p class="text-xs text-blue-500 mt-1"><i class="fa-solid fa-user mr-1"></i>${trainerName}</p>` : ''}
@@ -255,7 +278,7 @@
             </div>`;
         }
 
-        // ================= 2. CALENDAR (Icon Grid) =================
+        // ================= 2. CALENDAR (Icon Grid 3-col) =================
         async function renderCalendar() {
             showLoading(true);
             setActiveNav('nav-calendar');
@@ -267,20 +290,39 @@
             calendarInstance = new FullCalendar.Calendar(calEl, {
                 initialView: 'dayGridMonth', locale: 'th', height: '100%',
                 headerToolbar: { left: 'prev', center: 'title', right: 'next' },
-                dayMaxEvents: false,
                 events: async (info, success, failure) => {
                     try {
                         const { data, error } = await supabaseClient.from('tasks').select('*, profiles!tasks_trainer_id_fkey(full_name, display_name)').gte('date', info.startStr).lte('date', info.endStr);
                         if(error) throw error;
-                        const events = data.map(t => ({ id: t.id, start: t.date, extendedProps: t, display: 'background' }));
+                        
+                        // Group tasks by date
+                        const tasksByDate = {};
+                        data.forEach(t => {
+                            if(!tasksByDate[t.date]) tasksByDate[t.date] = [];
+                            tasksByDate[t.date].push(t);
+                        });
+
+                        // Create 1 event object per date to render the Grid
+                        const events = Object.keys(tasksByDate).map(date => ({
+                            start: date,
+                            allDay: true,
+                            display: 'background', // Hide default rendering
+                            extendedProps: { tasks: tasksByDate[date] }
+                        }));
                         success(events);
                     } catch (err) { failure(err); }
                 },
+                // Custom Content: Render Grid
                 eventContent: function(arg) {
-                    const t = arg.event.extendedProps;
-                    const initials = getAvatarInitials(t.profiles.full_name);
-                    const bgColor = t.is_leave ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600';
-                    return { html: `<div class="inline-flex items-center justify-center w-5 h-5 ${bgColor} rounded-full text-[8px] font-bold shadow-sm m-0.5 border border-white" title="${t.profiles.display_name}">${initials}</div>` }
+                    const tasks = arg.event.extendedProps.tasks;
+                    let html = '<div class="avatar-grid">';
+                    tasks.forEach(t => {
+                        const initials = getAvatarInitials(t.profiles.full_name);
+                        const bgColor = t.is_leave ? 'bg-red-500' : 'bg-blue-600';
+                        html += `<div class="avatar-icon ${bgColor}">${initials}</div>`;
+                    });
+                    html += '</div>';
+                    return { html: html };
                 },
                 dateClick: async (info) => { await showDateDetails(info.dateStr); }
             });
@@ -328,7 +370,9 @@
                 </div>`;
         }
 
-        // --- 3.1 Check Who Is Free ---
+        // ... [Functions: renderAvailabilityCheck, runAvailabilityCheck, renderCheckWhoIsFree, runCheckWhoIsFree, renderDailyReport - Same as V4.5] ...
+        // Re-adding them for completeness in single file
+        
         function renderCheckWhoIsFree() {
             document.getElementById('main-content').innerHTML = `
                 <div class="space-y-6">
@@ -356,7 +400,6 @@
             } catch (e) { alert(e.message); } finally { showLoading(false); }
         }
 
-        // --- 3.2 Check Team Availability ---
         function renderAvailabilityCheck() {
             document.getElementById('main-content').innerHTML = `
                 <div class="space-y-6">
@@ -421,7 +464,6 @@
             showLoading(false);
         }
 
-        // --- 3.3 Daily Reports ---
         async function renderDailyReport(dayType) {
             showLoading(true);
             try {
@@ -433,7 +475,7 @@
             } catch(e) { alert(e.message); } finally { showLoading(false); }
         }
 
-        // --- 3.4 Line Report ---
+        // --- 3.4 Line Report (Specific Sorting) ---
         async function generateLineReport() {
             showLoading(true);
             try {
@@ -441,20 +483,31 @@
                 const dateStr = tomorrow.toISOString().split('T')[0];
                 const { data: tasks, error } = await supabaseClient.from('tasks').select('*, profiles!tasks_trainer_id_fkey(full_name, display_name, role, team)').eq('date', dateStr);
                 if(error) throw error;
+
                 const dayThai = tomorrow.toLocaleDateString('th-TH', {weekday:'long', day:'numeric', month:'short'});
                 let msg = `🗓️ ${dayThai}\n\n💙🧡 ttb Team 🧡💙\n.........................................\n`;
-                const printSection = (teamName) => {
+
+                // Sorting Orders
+                const specialistOrder = ['Thanayot', 'ธนยศ', 'Yannapat', 'ญานภัทร', 'Natkanit', 'ณัฐกนิษฐ์', 'Pachara', 'พชร', 'Saowanee', 'เสาวนีย์', 'Wattanapan', 'วัฒนพันธ์', 'Arthaphan', 'อรรถพันธ์'];
+                const mandatoryOrder = ['Ananya', 'อนัญญา', 'Nantida', 'นันทิดา', 'Supaporn', 'สุภาภรณ์', 'Patchareeya', 'พัชรียา', 'Suksawad', 'สุขสวัสดิ์'];
+
+                const getRank = (name, orderArr) => {
+                    const idx = orderArr.findIndex(key => name.includes(key));
+                    return idx === -1 ? 999 : idx;
+                };
+
+                const printSection = (teamName, orderArr) => {
                     msg += `🌟 ${teamName}\n`;
-                    let members = allProfiles.filter(p => p.team === teamName).sort((a,b)=>a.full_name.localeCompare(b.full_name));
+                    let members = allProfiles.filter(p => p.team === teamName).sort((a,b) => getRank(a.full_name, orderArr) - getRank(b.full_name, orderArr));
                     members.forEach(m => {
                         const userTasks = tasks.filter(t => t.trainer_id === m.id);
                         msg += `● ${formatNameShort(m)}\n`;
                         userTasks.forEach(t => {
                             if(t.is_leave) msg += `- ${t.leave_type}\n`;
                             else {
-                                const fmt = t.format ? `(${t.format})` : '';
-                                const aud = t.audience ? `${t.audience}:` : '';
-                                const time = t.format ? `(${formatTime(t.start_time)}-${formatTime(t.end_time)})` : '';
+                                const fmt = (t.format && t.format !== '') ? `(${t.format})` : '';
+                                const aud = (t.audience && t.audience !== '') ? `${t.audience}:` : '';
+                                const time = (t.format && t.format !== '') ? `(${formatTime(t.start_time)}-${formatTime(t.end_time)})` : '';
                                 msg += `- ${aud}${fmt} ${t.course_details} ${time}\n`;
                             }
                         });
@@ -462,7 +515,9 @@
                     });
                     msg += `.........................................\n`;
                 }
-                printSection('Training Specialist'); printSection('Mandatory');
+                printSection('Training Specialist', specialistOrder); 
+                printSection('Mandatory', mandatoryOrder);
+                
                 document.getElementById('modal-content').innerHTML = `<div class="p-4"><h3 class="font-bold mb-2">Line Report</h3><textarea class="w-full h-64 text-xs border bg-slate-50 font-mono">${msg}</textarea><button onclick="document.getElementById('modal-container').classList.add('hidden')" class="w-full mt-2 py-2 bg-slate-200 rounded">Close</button></div>`;
                 document.getElementById('modal-container').classList.remove('hidden');
             } catch(e) { alert(e.message); } finally { showLoading(false); }
@@ -487,11 +542,11 @@
                         <div class="flex items-center gap-3 mb-2 bg-slate-50 p-3 rounded-xl"><input type="checkbox" id="is-leave" onchange="toggleLeaveMode()" ${task?.is_leave ? 'checked' : ''} class="w-5 h-5"><label for="is-leave" class="text-sm font-medium text-slate-700">บันทึกเป็นวันลา / วันหยุด</label></div>
                         <div id="leave-fields" class="${task?.is_leave ? '' : 'hidden'}"><label class="text-xs font-bold text-slate-500 ml-1">ประเภทวันลา</label><select id="leave-type" class="input-rounded w-full px-4 py-3 bg-white text-sm"><option value="Annual leave">Annual Leave</option><option value="Sick leave">Sick Leave</option><option value="Business leave">Business Leave</option></select></div>
                         <div id="work-fields" class="${task?.is_leave ? 'hidden' : ''} space-y-4">
-                            <div><label class="text-xs font-bold text-slate-500 ml-1">Audience</label><select id="audience" class="input-rounded w-full px-4 py-3 bg-white text-sm"><option value=""></option><option value="ttb" ${task?.audience==='ttb'?'selected':''}>ttb</option><option value="PD ttb" ${task?.audience==='PD ttb'?'selected':''}>PD ttb</option><option value="PRU" ${task?.audience==='PRU'?'selected':''}>PRU</option><option value="Customer" ${task?.audience==='Customer'?'selected':''}>Customer</option><option value="Other" ${task?.audience==='Other'?'selected':''}>Other</option></select></div>
+                            <div><label class="text-xs font-bold text-slate-500 ml-1">Audience</label><select id="audience" class="input-rounded w-full px-4 py-3 bg-white text-sm"><option value="">ไม่ระบุ</option><option value="ttb" ${task?.audience==='ttb'?'selected':''}>ttb</option><option value="PD ttb" ${task?.audience==='PD ttb'?'selected':''}>PD ttb</option><option value="PRU" ${task?.audience==='PRU'?'selected':''}>PRU</option><option value="Customer" ${task?.audience==='Customer'?'selected':''}>Customer</option><option value="Other" ${task?.audience==='Other'?'selected':''}>Other</option></select></div>
                             <div><label class="text-xs font-bold text-slate-500 ml-1">หลักสูตร / รายละเอียด</label><input type="text" id="course-details" value="${task?.course_details || ''}" class="input-rounded w-full px-4 py-3 bg-white text-sm" placeholder="ระบุชื่อหลักสูตร"></div>
                             <div class="grid grid-cols-2 gap-3">
                                 <div><label class="text-xs font-bold text-slate-500 ml-1">วันที่</label><input type="date" id="date" value="${task?.date || datePrefill || new Date().toISOString().split('T')[0]}" required class="input-rounded w-full px-4 py-3 bg-white text-sm"></div>
-                                <div><label class="text-xs font-bold text-slate-500 ml-1">รูปแบบ</label><select id="format" class="input-rounded w-full px-4 py-3 bg-white text-sm" onchange="toggleTimeFields()"><option value=""></option><option value="Online" ${task?.format==='Online'?'selected':''}>Online</option><option value="F2F" ${task?.format==='F2F'?'selected':''}>F2F</option></select></div>
+                                <div><label class="text-xs font-bold text-slate-500 ml-1">รูปแบบ</label><select id="format" class="input-rounded w-full px-4 py-3 bg-white text-sm" onchange="toggleTimeFields()"><option value="">ไม่ระบุ</option><option value="Online" ${task?.format==='Online'?'selected':''}>Online</option><option value="F2F" ${task?.format==='F2F'?'selected':''}>F2F</option></select></div>
                             </div>
                             <div id="time-inputs" class="grid grid-cols-2 gap-3 ${!task?.format ? 'hidden' : ''}">
                                 <div><label class="text-xs font-bold text-slate-500 ml-1">เวลาเริ่ม</label><input type="time" id="start-time" value="${task?.start_time?.substring(0,5) || '09:00'}" class="input-rounded w-full px-4 py-3 bg-white text-sm"></div>
@@ -547,9 +602,11 @@
 
         async function deleteTask(taskId) { if(confirm('ลบงานนี้?')) { await supabaseClient.from('tasks').delete().eq('id', taskId); renderDashboard(); } }
 
-        // ================= 5. PROFILE =================
+        // ================= 5. PROFILE & ADMIN USERS =================
         function renderProfile() {
             setActiveNav('nav-profile');
+            const isAdmin = ['admin', 'master'].includes(userProfile.role);
+            
             document.getElementById('main-content').innerHTML = `
                 <div class="max-w-sm mx-auto space-y-6">
                     <div class="bg-white rounded-2xl shadow-sm p-6 text-center border border-slate-100 mt-6">
@@ -557,6 +614,30 @@
                         <h2 class="text-xl font-bold text-slate-800">${userProfile.full_name}</h2>
                         <div class="inline-block px-3 py-1 bg-slate-50 text-slate-600 rounded-full text-xs font-bold mt-2">${userProfile.team || 'No Team'}</div>
                     </div>
+                    
+                    ${isAdmin ? `
+                    <div class="bg-white rounded-2xl shadow-sm p-6 border border-slate-100">
+                        <h3 class="font-bold text-slate-700 mb-4"><i class="fa-solid fa-users-cog mr-2"></i>จัดการผู้ใช้</h3>
+                        <form onsubmit="handleCreateUser(event)" class="space-y-3">
+                            <input type="email" id="new-user-email" placeholder="Email" class="input-rounded w-full px-4 py-2 bg-slate-50 text-sm" required>
+                            <input type="password" id="new-user-pass" placeholder="Password" class="input-rounded w-full px-4 py-2 bg-slate-50 text-sm" required>
+                            <input type="text" id="new-user-name" placeholder="Full Name" class="input-rounded w-full px-4 py-2 bg-slate-50 text-sm" required>
+                            <input type="text" id="new-user-display" placeholder="Nickname" class="input-rounded w-full px-4 py-2 bg-slate-50 text-sm" required>
+                            <select id="new-user-role" class="input-rounded w-full px-4 py-2 bg-slate-50 text-sm">
+                                <option value="trainer">Trainer</option>
+                                <option value="training_specialist">Training Specialist</option>
+                                <option value="mandatory">Mandatory</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                            <select id="new-user-team" class="input-rounded w-full px-4 py-2 bg-slate-50 text-sm">
+                                <option value="Training Specialist">Training Specialist</option>
+                                <option value="Mandatory">Mandatory</option>
+                            </select>
+                            <button type="submit" class="w-full py-2 bg-indigo-600 text-white rounded-lg font-bold text-sm">สร้างผู้ใช้ใหม่</button>
+                            <p class="text-[10px] text-red-400 mt-2">* คำเตือน: ระบบจะ Login เป็น User ใหม่ทันที</p>
+                        </form>
+                    </div>` : ''}
+
                     <div class="bg-white rounded-2xl shadow-sm p-6 border border-slate-100">
                         <h3 class="font-bold text-slate-700 mb-4">🔐 เปลี่ยนรหัสผ่าน</h3>
                         <form onsubmit="handleChangePassword(event)">
@@ -571,6 +652,48 @@
             const { error } = await supabaseClient.auth.updateUser({ password: document.getElementById('new-password').value });
             showLoading(false);
             if(error) alert('Error: '+error.message); else { alert('สำเร็จ! กรุณาเข้าสู่ระบบใหม่'); handleLogout(); }
+        }
+
+        async function handleCreateUser(e) {
+            e.preventDefault();
+            if(!confirm('การสร้าง User ใหม่จะทำให้คุณออกจากระบบปัจจุบัน ยืนยันหรือไม่?')) return;
+            showLoading(true);
+            
+            const email = document.getElementById('new-user-email').value;
+            const password = document.getElementById('new-user-pass').value;
+            const fullName = document.getElementById('new-user-name').value;
+            const display = document.getElementById('new-user-display').value;
+            const role = document.getElementById('new-user-role').value;
+            const team = document.getElementById('new-user-team').value;
+
+            try {
+                // 1. Sign Up (Logs out admin)
+                const { data: authData, error: authError } = await supabaseClient.auth.signUp({
+                    email: email, password: password,
+                    options: { data: { full_name: fullName, display_name: display } }
+                });
+                if(authError) throw authError;
+
+                // 2. Insert Profile
+                const { error: profileError } = await supabaseClient.from('profiles').insert({
+                    id: authData.user.id,
+                    email: email,
+                    full_name: fullName,
+                    display_name: display,
+                    role: role,
+                    team: team,
+                    user_id_code: email.split('@')[0] // Auto gen ID
+                });
+                if(profileError) throw profileError;
+
+                alert('สร้าง User สำเร็จ! กรุณาแจ้งให้ User ทราบ');
+                window.location.reload();
+            } catch (err) {
+                alert('Error: ' + err.message);
+                window.location.reload(); // Recover session if failed
+            } finally {
+                showLoading(false);
+            }
         }
 
         supabaseClient.auth.getSession().then(({ data: { session } }) => { if (session) initApp(session.user); });
