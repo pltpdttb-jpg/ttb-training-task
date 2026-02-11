@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ttb Trainer Task V4.1</title>
+    <title>ttb Trainer Task V4.2</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -35,6 +35,7 @@
         .audience-pru { border-left-color: #8b5cf6; }
         .audience-customer { border-left-color: #f59e0b; }
         .audience-other { border-left-color: #6b7280; }
+        .audience-none { border-left-color: #cbd5e1; } /* For empty audience */
 
         .hidden { display: none !important; }
     </style>
@@ -43,8 +44,8 @@
 
     <script>
         // *** ใส่ Supabase Key ของคุณที่นี่ ***
-        const SUPABASE_URL = 'https://anxfdwgmookmquuzkupa.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFueGZkd2dtb29rbXF1dXprdXBhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3ODk3NDMsImV4cCI6MjA4NjM2NTc0M30.4H8QVHAoIhpkNvN2eltbI31TwD5Lx2wTILZtZZFzCgQ';
+        const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+        const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_KEY';
         
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         
@@ -58,7 +59,7 @@
     <!-- LOGIN SCREEN -->
     <div id="login-screen" class="min-h-screen flex flex-col justify-center items-center p-8 bg-white absolute inset-0 z-[100]">
         <div class="w-20 h-20 rounded-2xl bg-gradient-primary flex items-center justify-center text-white font-bold text-3xl shadow-xl mb-6">ttb</div>
-        <h2 class="text-xl font-bold text-slate-800 mb-1">Trainer Task V4.1</h2>
+        <h2 class="text-xl font-bold text-slate-800 mb-1">Trainer Task V4.2</h2>
         <p class="text-slate-400 text-xs mb-8 text-center">ระบบบริหารจัดการงานสอน</p>
 
         <form id="login-form" class="w-full max-w-sm space-y-4" onsubmit="handleLogin(event)">
@@ -105,8 +106,9 @@
             <button onclick="renderCreateTask()" class="w-12 h-12 bg-gradient-primary rounded-full text-white shadow-lg -mt-8 border-4 border-white flex items-center justify-center active:scale-95 transition-transform">
                 <i class="fa-solid fa-plus text-xl"></i>
             </button>
-            <button onclick="renderAvailabilityCheck()" id="nav-check" class="nav-btn flex flex-col items-center gap-1 p-2 text-slate-400 hidden">
-                <i class="fa-solid fa-magnifying-glass text-lg"></i><span class="text-[9px]">เช็คว่าง</span>
+            <!-- Changed from Check to Reports Hub -->
+            <button onclick="renderReportsHub()" id="nav-reports" class="nav-btn flex flex-col items-center gap-1 p-2 text-slate-400">
+                <i class="fa-solid fa-folder-open text-lg"></i><span class="text-[9px]">รายงาน</span>
             </button>
             <button onclick="renderProfile()" class="nav-btn flex flex-col items-center gap-1 p-2 text-slate-400" id="nav-profile">
                 <i class="fa-solid fa-user text-lg"></i><span class="text-[9px]">โปรไฟล์</span>
@@ -134,8 +136,8 @@
             document.querySelectorAll('.nav-btn').forEach(b => { b.classList.remove('text-blue-600'); b.classList.add('text-slate-400'); });
             const btn = document.getElementById(id); if(btn) { btn.classList.add('text-blue-600'); btn.classList.remove('text-slate-400'); }
         };
-        const getAudienceClass = (aud) => ({ 'ttb': 'audience-ttb', 'PD ttb': 'audience-pd', 'PRU': 'audience-pru', 'Customer': 'audience-customer' }[aud] || 'audience-other');
-        const getAudienceColor = (aud) => ({ 'ttb': '#3b82f6', 'PD ttb': '#10b981', 'PRU': '#8b5cf6', 'Customer': '#f59e0b' }[aud] || '#6b7280');
+        const getAudienceClass = (aud) => ({ 'ttb': 'audience-ttb', 'PD ttb': 'audience-pd', 'PRU': 'audience-pru', 'Customer': 'audience-customer' }[aud] || 'audience-none');
+        const getAudienceColor = (aud) => ({ 'ttb': '#3b82f6', 'PD ttb': '#10b981', 'PRU': '#8b5cf6', 'Customer': '#f59e0b' }[aud] || '#94a3b8');
         
         // Helper to format name: "FirstName (Nickname)"
         const formatNameShort = (profile) => {
@@ -172,10 +174,9 @@
             const { data: profile } = await supabaseClient.from('profiles').select('*').eq('id', user.id).single();
             userProfile = profile;
             
-            // Fetch all profiles AND FILTER OUT ALONGKORN IMMEDIATELY
+            // Fetch all profiles AND FILTER OUT ALONGKORN
             const { data: profiles } = await supabaseClient.from('profiles').select('*');
             if (profiles) {
-                // Remove Alongkorn by ID or Name logic
                 allProfiles = profiles.filter(p => 
                     !p.full_name.includes('อลงกรณ์') && 
                     !p.email.includes('korn.ak28') &&
@@ -188,11 +189,6 @@
             document.getElementById('header-avatar').textContent = (profile.display_name || 'U').substring(0,2);
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('app').classList.remove('hidden');
-
-            // Show Admin-only menus
-            if(['admin', 'master'].includes(profile.role)) {
-                document.getElementById('nav-check').classList.remove('hidden');
-            }
 
             renderDashboard();
         }
@@ -209,16 +205,13 @@
             showLoading(true);
             setActiveNav('nav-home');
             
-            // Dates setup
             const now = new Date();
             const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
             const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
-            
             const todayStr = now.toISOString().split('T')[0];
             const tomorrow = new Date(now); tomorrow.setDate(now.getDate() + 1);
             const tomorrowStr = tomorrow.toISOString().split('T')[0];
 
-            // Fetch My Tasks for this month
             const { data: monthTasks } = await supabaseClient.from('tasks')
                 .select('*')
                 .eq('trainer_id', currentUser.id)
@@ -226,7 +219,6 @@
                 .lte('date', endOfMonth)
                 .order('start_time');
 
-            // Fetch Today & Tomorrow (could be fetched separately if they cross month boundary, but for simplicity assuming active user checks current context mostly. To be safe, let's fetch specific dates)
             const { data: upcomingTasks } = await supabaseClient.from('tasks')
                 .select('*')
                 .eq('trainer_id', currentUser.id)
@@ -234,26 +226,25 @@
                 .order('date', { ascending: true })
                 .order('start_time', { ascending: true });
 
-            // Calculate Stats
             const totalTasks = monthTasks.length;
             const f2fCount = monthTasks.filter(t => t.format === 'F2F').length;
             const onlineCount = monthTasks.filter(t => t.format === 'Online').length;
             const totalHours = monthTasks.reduce((acc, t) => {
                 if (t.is_leave) return acc;
+                // If format is empty/null, don't count hours
+                if (!t.format || t.format === '') return acc;
                 const h1 = parseInt(t.start_time.split(':')[0]);
                 const h2 = parseInt(t.end_time.split(':')[0]);
                 return acc + (h2 - h1);
             }, 0);
 
-            // Prepare Chart Data (Weekly Breakdown)
-            const weeks = [0, 0, 0, 0, 0]; // Up to 5 weeks
+            const weeks = [0, 0, 0, 0, 0];
             monthTasks.forEach(t => {
                 const d = new Date(t.date);
                 const weekNum = Math.floor((d.getDate() - 1) / 7);
                 if(weeks[weekNum] !== undefined) weeks[weekNum]++;
             });
 
-            // Split Upcoming
             const tasksToday = upcomingTasks.filter(t => t.date === todayStr);
             const tasksTomorrow = upcomingTasks.filter(t => t.date === tomorrowStr);
 
@@ -263,8 +254,6 @@
                         <h2 class="text-xl font-bold text-slate-800">แดชบอร์ดส่วนตัว</h2>
                         <p class="text-xs text-slate-500">สถิติเดือน ${now.toLocaleDateString('th-TH', { month: 'long', year: 'numeric' })}</p>
                     </div>
-
-                    <!-- 1. Stats Grid -->
                     <div class="grid grid-cols-2 gap-3">
                         <div class="bg-gradient-primary rounded-2xl p-4 text-white shadow-lg relative overflow-hidden">
                             <p class="text-xs opacity-80">งานทั้งหมด</p>
@@ -282,27 +271,19 @@
                             </div>
                         </div>
                     </div>
-
-                    <!-- 2. Weekly Chart -->
                     <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
                         <h3 class="text-sm font-bold text-slate-700 mb-2">จำนวนคลาสรายสัปดาห์</h3>
                         <canvas id="weeklyChart" height="100"></canvas>
                     </div>
-
-                    <!-- 3. Agenda -->
                     <div class="space-y-4">
                         <div>
-                            <h3 class="font-bold text-slate-700 mb-2 flex items-center gap-2">
-                                <span class="w-2 h-2 bg-blue-500 rounded-full"></span> วันนี้
-                            </h3>
+                            <h3 class="font-bold text-slate-700 mb-2 flex items-center gap-2"><span class="w-2 h-2 bg-blue-500 rounded-full"></span> วันนี้</h3>
                             <div class="space-y-2">
                                 ${tasksToday.length === 0 ? '<p class="text-xs text-slate-400 italic">ไม่มีงานวันนี้</p>' : tasksToday.map(t => renderTaskCard(t)).join('')}
                             </div>
                         </div>
                         <div>
-                            <h3 class="font-bold text-slate-700 mb-2 flex items-center gap-2">
-                                <span class="w-2 h-2 bg-orange-500 rounded-full"></span> พรุ่งนี้
-                            </h3>
+                            <h3 class="font-bold text-slate-700 mb-2 flex items-center gap-2"><span class="w-2 h-2 bg-orange-500 rounded-full"></span> พรุ่งนี้</h3>
                             <div class="space-y-2">
                                 ${tasksTomorrow.length === 0 ? '<p class="text-xs text-slate-400 italic">ไม่มีงานวันพรุ่งนี้</p>' : tasksTomorrow.map(t => renderTaskCard(t)).join('')}
                             </div>
@@ -311,39 +292,28 @@
                 </div>
             `;
 
-            // Init Chart
             if(dashboardChart) dashboardChart.destroy();
             dashboardChart = new Chart(document.getElementById('weeklyChart'), {
                 type: 'bar',
-                data: {
-                    labels: ['W1', 'W2', 'W3', 'W4', 'W5'],
-                    datasets: [{
-                        label: 'Classes',
-                        data: weeks,
-                        backgroundColor: '#3b82f6',
-                        borderRadius: 4
-                    }]
-                },
-                options: {
-                    plugins: { legend: { display: false } },
-                    scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } }, x: { grid: { display: false } } }
-                }
+                data: { labels: ['W1', 'W2', 'W3', 'W4', 'W5'], datasets: [{ label: 'Classes', data: weeks, backgroundColor: '#3b82f6', borderRadius: 4 }] },
+                options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } }, x: { grid: { display: false } } } }
             });
-
             showLoading(false);
         }
 
-        function renderTaskCard(t) {
+        function renderTaskCard(t, showTrainer = false) {
+            const timeDisplay = (!t.format || t.format === '') ? 'ไม่ระบุเวลา' : `${formatTime(t.start_time)}-${formatTime(t.end_time)}`;
             return `
             <div class="task-card bg-white p-4 border border-slate-100 ${getAudienceClass(t.audience)}" onclick="openTaskDetail('${t.id}')">
                 <div class="flex justify-between items-start">
                     <div>
                         <div class="flex items-center gap-2 mb-1">
-                            <span class="text-[10px] px-2 py-0.5 rounded-full ${t.format === 'Online' ? 'bg-emerald-100 text-emerald-600' : 'bg-blue-100 text-blue-600'}">${t.format}</span>
-                            <span class="text-xs text-slate-400 font-mono">${formatTime(t.start_time)}-${formatTime(t.end_time)}</span>
+                            ${t.format && t.format !== '' ? `<span class="text-[10px] px-2 py-0.5 rounded-full ${t.format === 'Online' ? 'bg-emerald-100 text-emerald-600' : 'bg-blue-100 text-blue-600'}">${t.format}</span>` : ''}
+                            <span class="text-xs text-slate-400 font-mono">${timeDisplay}</span>
                         </div>
                         <h4 class="font-bold text-slate-800 text-sm">${t.is_leave ? '🌴 '+t.leave_type : t.course_details}</h4>
                         ${!t.is_leave ? `<p class="text-xs text-slate-500 mt-1"><i class="fa-solid fa-location-dot mr-1"></i>${t.location || '-'}</p>` : ''}
+                        ${showTrainer ? `<p class="text-xs text-blue-500 mt-1"><i class="fa-solid fa-user mr-1"></i>${t.profiles?.display_name || ''}</p>` : ''}
                     </div>
                     <i class="fa-solid fa-chevron-right text-slate-300 text-xs"></i>
                 </div>
@@ -402,9 +372,7 @@
             let trainerInputHTML = '';
             
             if (['admin', 'master'].includes(userProfile.role)) {
-                // Admin/Master: Multiselect, Real Names ONLY (FirstName (Nickname)), No Alongkorn
                 const eligibleTrainers = allProfiles.sort((a,b) => a.full_name.localeCompare(b.full_name));
-
                 trainerInputHTML = `
                     <div class="mb-4">
                         <label class="text-xs font-bold text-slate-500 ml-1">ผู้สอน (เลือกได้หลายคน)</label>
@@ -420,6 +388,10 @@
             } else {
                 trainerInputHTML = `<input type="hidden" id="task-trainer" value="${currentUser.id}">`;
             }
+
+            // Determine if time inputs should be hidden initially
+            const isFormatEmpty = task && (task.format === '' || task.format === null);
+            const timeDisplayClass = isFormatEmpty ? 'hidden' : 'grid';
 
             const html = `
                 <div class="max-w-md mx-auto">
@@ -449,6 +421,7 @@
                             <div>
                                 <label class="text-xs font-bold text-slate-500 ml-1">Audience (กลุ่มเป้าหมาย)</label>
                                 <select id="audience" class="input-rounded w-full px-4 py-3 bg-white text-sm">
+                                    <option value="">(ไม่ระบุ)</option>
                                     <option value="ttb" ${task?.audience === 'ttb' ? 'selected' : ''}>ttb</option>
                                     <option value="PD ttb" ${task?.audience === 'PD ttb' ? 'selected' : ''}>PD ttb</option>
                                     <option value="PRU" ${task?.audience === 'PRU' ? 'selected' : ''}>PRU</option>
@@ -469,21 +442,22 @@
                                 </div>
                                 <div>
                                     <label class="text-xs font-bold text-slate-500 ml-1">รูปแบบ</label>
-                                    <select id="format" class="input-rounded w-full px-4 py-3 bg-white text-sm">
+                                    <select id="format" class="input-rounded w-full px-4 py-3 bg-white text-sm" onchange="toggleTimeFields()">
+                                        <option value="">(ไม่ระบุ / ไม่ใส่วลา)</option>
                                         <option value="Online" ${task?.format === 'Online' ? 'selected' : ''}>Online</option>
                                         <option value="F2F" ${task?.format === 'F2F' ? 'selected' : ''}>Face to Face</option>
                                     </select>
                                 </div>
                             </div>
 
-                            <div class="grid grid-cols-2 gap-3">
+                            <div id="time-inputs" class="${timeDisplayClass} grid-cols-2 gap-3">
                                 <div>
                                     <label class="text-xs font-bold text-slate-500 ml-1">เวลาเริ่ม</label>
-                                    <input type="time" id="start-time" value="${task?.start_time?.substring(0,5) || '09:00'}" required class="input-rounded w-full px-4 py-3 bg-white text-sm">
+                                    <input type="time" id="start-time" value="${task?.start_time?.substring(0,5) || '09:00'}" class="input-rounded w-full px-4 py-3 bg-white text-sm">
                                 </div>
                                 <div>
                                     <label class="text-xs font-bold text-slate-500 ml-1">เวลาจบ</label>
-                                    <input type="time" id="end-time" value="${task?.end_time?.substring(0,5) || '17:00'}" required class="input-rounded w-full px-4 py-3 bg-white text-sm">
+                                    <input type="time" id="end-time" value="${task?.end_time?.substring(0,5) || '17:00'}" class="input-rounded w-full px-4 py-3 bg-white text-sm">
                                 </div>
                             </div>
                             
@@ -496,7 +470,11 @@
                         <button type="submit" class="w-full bg-gradient-primary text-white font-bold py-4 rounded-xl shadow-lg mt-4">
                             ${taskId ? 'บันทึกการแก้ไข' : 'สร้างงาน'}
                         </button>
-                        ${taskId ? `<button type="button" onclick="deleteTask('${taskId}')" class="w-full bg-red-50 text-red-500 font-bold py-3 rounded-xl mt-2">ลบงานนี้</button>` : ''}
+                        
+                        <!-- Delete Button: Show if taskId exists AND (Owner OR Admin/Master) -->
+                        ${taskId && (task.trainer_id === currentUser.id || ['admin', 'master'].includes(userProfile.role)) 
+                            ? `<button type="button" onclick="deleteTask('${taskId}')" class="w-full bg-red-50 text-red-500 font-bold py-3 rounded-xl mt-2">ลบงานนี้</button>` 
+                            : ''}
                     </form>
                 </div>
             `;
@@ -509,6 +487,18 @@
             const isLeave = document.getElementById('is-leave').checked;
             document.getElementById('leave-fields').classList.toggle('hidden', !isLeave);
             document.getElementById('work-fields').classList.toggle('hidden', isLeave);
+        }
+
+        function toggleTimeFields() {
+            const format = document.getElementById('format').value;
+            const timeInputs = document.getElementById('time-inputs');
+            if (format === "") {
+                timeInputs.classList.add('hidden');
+                timeInputs.classList.remove('grid');
+            } else {
+                timeInputs.classList.remove('hidden');
+                timeInputs.classList.add('grid');
+            }
         }
 
         async function handleSaveTask(e, taskId) {
@@ -525,25 +515,34 @@
 
             if(selectedTrainers.length === 0) { alert('กรุณาเลือกผู้สอน'); showLoading(false); return; }
 
+            const isLeave = document.getElementById('is-leave').checked;
+            const format = document.getElementById('format').value;
+
             const basePayload = {
                 date: document.getElementById('date').value,
-                start_time: document.getElementById('start-time').value,
-                end_time: document.getElementById('end-time').value,
-                is_leave: document.getElementById('is-leave').checked,
+                is_leave: isLeave,
                 created_by: currentUser.id
             };
 
-            if (basePayload.is_leave) {
+            if (isLeave) {
                 basePayload.leave_type = document.getElementById('leave-type').value;
-                basePayload.course_details = null;
-                basePayload.format = null;
-                basePayload.audience = null;
-                basePayload.location = null;
+                // Important: clear other fields
+                basePayload.start_time = '00:00';
+                basePayload.end_time = '00:00';
             } else {
                 basePayload.course_details = document.getElementById('course-details').value;
-                basePayload.format = document.getElementById('format').value;
+                basePayload.format = format;
                 basePayload.audience = document.getElementById('audience').value;
                 basePayload.location = document.getElementById('location').value;
+                
+                // If format is empty, we must still send a valid time to DB (constraint), but it means "No time"
+                if (format === "") {
+                    basePayload.start_time = '00:00';
+                    basePayload.end_time = '00:00';
+                } else {
+                    basePayload.start_time = document.getElementById('start-time').value;
+                    basePayload.end_time = document.getElementById('end-time').value;
+                }
             }
 
             try {
@@ -562,20 +561,65 @@
         }
 
         async function deleteTask(taskId) {
-            if(confirm('ลบงานนี้?')) {
-                await supabaseClient.from('tasks').delete().eq('id', taskId);
-                renderDashboard();
+            if(confirm('ยืนยันที่จะลบงานนี้? (สามารถลบได้โดยเจ้าของงาน หรือ Admin)')) {
+                const { error } = await supabaseClient.from('tasks').delete().eq('id', taskId);
+                if (error) alert('ลบไม่ได้: ' + error.message);
+                else renderDashboard();
             }
         }
 
         function openTaskDetail(taskId) { renderCreateTask(taskId); }
 
-        // ================= 4. CHECK AVAILABILITY (Admin Only) =================
+        // ================= 4. REPORTS HUB (NEW) =================
+        function renderReportsHub() {
+            setActiveNav('nav-reports');
+            document.getElementById('main-content').innerHTML = `
+                <div class="space-y-4">
+                    <h2 class="text-xl font-bold text-slate-800">📁 ศูนย์รวมรายงาน</h2>
+                    
+                    <button onclick="renderAvailabilityCheck()" class="w-full bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex items-center gap-4 text-left hover:bg-slate-50">
+                        <div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center"><i class="fa-solid fa-magnifying-glass"></i></div>
+                        <div>
+                            <h3 class="font-bold text-slate-700">เช็ควันว่างทีม</h3>
+                            <p class="text-xs text-slate-400">ค้นหาเวลาที่ว่างตรงกัน</p>
+                        </div>
+                    </button>
+
+                    <button onclick="renderDailyReport('today')" class="w-full bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex items-center gap-4 text-left hover:bg-slate-50">
+                        <div class="w-10 h-10 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center"><i class="fa-solid fa-calendar-day"></i></div>
+                        <div>
+                            <h3 class="font-bold text-slate-700">รายงาน: วันนี้ (All Team)</h3>
+                            <p class="text-xs text-slate-400">แสดงงานของทุกคนในวันนี้</p>
+                        </div>
+                    </button>
+
+                    <button onclick="renderDailyReport('tomorrow')" class="w-full bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex items-center gap-4 text-left hover:bg-slate-50">
+                        <div class="w-10 h-10 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center"><i class="fa-solid fa-forward"></i></div>
+                        <div>
+                            <h3 class="font-bold text-slate-700">รายงาน: วันพรุ่งนี้ (All Team)</h3>
+                            <p class="text-xs text-slate-400">แสดงงานของทุกคนในวันพรุ่งนี้</p>
+                        </div>
+                    </button>
+
+                    <button onclick="generateLineReport()" class="w-full bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex items-center gap-4 text-left hover:bg-slate-50">
+                        <div class="w-10 h-10 bg-green-100 text-green-600 rounded-full flex items-center justify-center"><i class="fa-brands fa-line"></i></div>
+                        <div>
+                            <h3 class="font-bold text-slate-700">Line Report</h3>
+                            <p class="text-xs text-slate-400">สร้างข้อความสำหรับส่งไลน์ (Auto)</p>
+                        </div>
+                    </button>
+                </div>
+            `;
+        }
+
+        // --- 4.1 Check Availability ---
         function renderAvailabilityCheck() {
-            setActiveNav('nav-check');
             const html = `
                 <div class="space-y-6">
-                    <h2 class="text-xl font-bold text-slate-800">🔍 ตรวจสอบวันว่างทีม</h2>
+                    <div class="flex items-center gap-2">
+                         <button onclick="renderReportsHub()" class="text-slate-400"><i class="fa-solid fa-arrow-left"></i></button>
+                         <h2 class="text-xl font-bold text-slate-800">🔍 เช็ควันว่างทีม</h2>
+                    </div>
                     <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 space-y-4">
                         <div>
                             <label class="text-xs font-bold text-slate-500 ml-1">1. เลือกกลุ่มเป้าหมาย</label>
@@ -696,101 +740,41 @@
             showLoading(false);
         }
 
-        // ================= 5. PROFILE & SETTINGS (Password Change) =================
-        function renderProfile() {
-            setActiveNav('nav-profile');
-            document.getElementById('main-content').innerHTML = `
-                <div class="max-w-sm mx-auto space-y-6">
-                    <div class="bg-white rounded-2xl shadow-sm p-6 text-center border border-slate-100 mt-6">
-                        <div class="w-24 h-24 rounded-full bg-slate-100 mx-auto mb-4 flex items-center justify-center text-3xl font-bold text-slate-400">
-                            ${(userProfile.display_name || 'U').substring(0,2)}
-                        </div>
-                        <h2 class="text-xl font-bold text-slate-800">${userProfile.full_name}</h2>
-                        <p class="text-slate-500 mb-4">${userProfile.email}</p>
-                        <div class="inline-block px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-xs font-bold mb-6">
-                            ${userProfile.team || 'No Team'}
-                        </div>
-                        <button onclick="renderReports()" class="w-full py-3 mb-2 bg-slate-50 text-slate-600 rounded-xl font-bold text-sm">ดูรายงานทีม</button>
-                        <button onclick="handleLogout()" class="w-full py-3 border border-red-100 text-red-500 rounded-xl hover:bg-red-50 transition-colors">ออกจากระบบ</button>
-                    </div>
+        // --- 4.2 Daily Report (Today/Tomorrow) ---
+        async function renderDailyReport(dayType) {
+            showLoading(true);
+            const targetDate = new Date();
+            if (dayType === 'tomorrow') targetDate.setDate(targetDate.getDate() + 1);
+            const dateStr = targetDate.toISOString().split('T')[0];
 
-                    <!-- Change Password -->
-                    <div class="bg-white rounded-2xl shadow-sm p-6 border border-slate-100">
-                        <h3 class="font-bold text-slate-700 mb-4">🔐 เปลี่ยนรหัสผ่าน</h3>
-                        <form onsubmit="handleChangePassword(event)">
-                            <div class="space-y-3">
-                                <input type="password" id="new-password" placeholder="รหัสผ่านใหม่ (ขั้นต่ำ 6 ตัว)" class="input-rounded w-full px-4 py-3 bg-slate-50 text-sm" required minlength="6">
-                                <button type="submit" class="w-full py-3 bg-blue-600 text-white rounded-xl font-bold">บันทึกรหัสผ่านใหม่</button>
-                            </div>
-                        </form>
+            const { data: tasks } = await supabaseClient.from('tasks')
+                .select('*, profiles(full_name, display_name)')
+                .eq('date', dateStr)
+                .order('start_time');
+
+            document.getElementById('main-content').innerHTML = `
+                <div class="space-y-4">
+                    <div class="flex items-center gap-2 mb-4">
+                         <button onclick="renderReportsHub()" class="text-slate-400"><i class="fa-solid fa-arrow-left"></i></button>
+                         <h2 class="text-xl font-bold text-slate-800">รายงาน: ${dayType === 'today' ? 'วันนี้' : 'วันพรุ่งนี้'}</h2>
+                    </div>
+                    <div class="bg-blue-50 p-3 rounded-lg text-center font-bold text-blue-700">
+                        ${formatDateThai(dateStr)}
+                    </div>
+                    <div class="space-y-2">
+                        ${tasks.length === 0 ? '<p class="text-center text-slate-400 py-4">ไม่มีงานในวันนี้</p>' : tasks.map(t => renderTaskCard(t, true)).join('')}
                     </div>
                 </div>
             `;
-        }
-
-        async function handleChangePassword(e) {
-            e.preventDefault();
-            const newPassword = document.getElementById('new-password').value;
-            showLoading(true);
-            const { error } = await supabaseClient.auth.updateUser({ password: newPassword });
-            showLoading(false);
-            
-            if (error) alert('เกิดข้อผิดพลาด: ' + error.message);
-            else {
-                alert('เปลี่ยนรหัสผ่านสำเร็จ! กรุณาเข้าสู่ระบบใหม่');
-                handleLogout();
-            }
-        }
-
-        async function renderReports() {
-            setActiveNav('nav-reports'); // Pseudo active
-            showLoading(true);
-            
-            const { data: allTasks } = await supabaseClient.from('tasks').select('*');
-            
-            // Workload Calc
-            const workload = {};
-            allTasks.forEach(t => { workload[t.trainer_id] = (workload[t.trainer_id] || 0) + 1; });
-            const trainerLabels = [];
-            const trainerData = [];
-            allProfiles.filter(p => p.role !== 'master').forEach(p => {
-                trainerLabels.push(p.display_name);
-                trainerData.push(workload[p.id] || 0);
-            });
-
-            document.getElementById('main-content').innerHTML = `
-                <div class="space-y-6">
-                    <div class="flex justify-between items-center">
-                        <h2 class="text-xl font-bold text-slate-800">📊 รายงานทีม</h2>
-                        <button onclick="renderDashboard()" class="text-sm text-blue-600">กลับ</button>
-                    </div>
-                    
-                    <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
-                        <h3 class="text-sm font-bold text-slate-700 mb-2">Workload Density</h3>
-                        <canvas id="densityChart"></canvas>
-                    </div>
-
-                    <button onclick="generateLineReport()" class="w-full py-3 bg-green-500 text-white rounded-xl font-bold shadow-md">
-                        <i class="fa-brands fa-line mr-2"></i> สร้าง Line Report
-                    </button>
-                </div>
-            `;
-
-            new Chart(document.getElementById('densityChart'), {
-                type: 'bar',
-                data: {
-                    labels: trainerLabels,
-                    datasets: [{ label: 'Jobs', data: trainerData, backgroundColor: '#3b82f6', borderRadius: 4 }]
-                },
-                options: { scales: { y: { beginAtZero: true } } }
-            });
             showLoading(false);
         }
 
+        // --- 4.3 Line Report ---
         async function generateLineReport() {
             showLoading(true);
             const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
             const dateStr = tomorrow.toISOString().split('T')[0];
+            
             const { data: tasks } = await supabaseClient.from('tasks').select('*, profiles(full_name, display_name, role, team)').eq('date', dateStr);
             
             const dayThai = tomorrow.toLocaleDateString('th-TH', {weekday:'long', day:'numeric', month:'short'});
@@ -818,7 +802,13 @@
                     if(userTasks.length > 0) {
                         userTasks.forEach(t => {
                             if(t.is_leave) msg += `- ${t.leave_type}\n`;
-                            else msg += `- ${t.audience}:(${t.format}) ${t.course_details} (${formatTime(t.start_time)}-${formatTime(t.end_time)})\n`;
+                            else {
+                                // Logic: If format is empty, don't show brackets or time?
+                                const fmt = (t.format && t.format !== '') ? `(${t.format})` : '';
+                                const aud = (t.audience && t.audience !== '') ? `${t.audience}:` : '';
+                                const time = (t.format && t.format !== '') ? `(${formatTime(t.start_time)}-${formatTime(t.end_time)})` : '';
+                                msg += `- ${aud}${fmt} ${t.course_details} ${time}\n`;
+                            }
                         });
                     }
                     msg += `\n`;
@@ -831,16 +821,58 @@
 
             const modalHtml = `
                 <div class="p-4">
-                    <h3 class="font-bold mb-2">Line Report</h3>
+                    <h3 class="font-bold mb-2">Line Report (พรุ่งนี้)</h3>
                     <textarea class="w-full h-64 text-xs border rounded p-2 bg-slate-50 font-mono" readonly>${msg}</textarea>
-                    <div class="flex gap-2 mt-2">
-                        <button onclick="navigator.clipboard.writeText(document.querySelector('textarea').value); alert('คัดลอกแล้ว');" class="flex-1 bg-green-500 text-white py-2 rounded-lg">Copy</button>
-                        <button onclick="document.getElementById('modal-container').classList.add('hidden')" class="flex-1 bg-slate-200 py-2 rounded-lg">Close</button>
+                    <div class="flex flex-col gap-2 mt-2">
+                        <button onclick="navigator.clipboard.writeText(document.querySelector('textarea').value); alert('คัดลอกแล้ว');" class="bg-green-500 text-white py-3 rounded-lg font-bold">Copy to Clipboard</button>
+                        <div class="flex gap-2">
+                            <button onclick="generateLineReport()" class="flex-1 bg-blue-100 text-blue-600 py-2 rounded-lg text-sm"><i class="fa-solid fa-rotate-right mr-1"></i> Refresh Data</button>
+                            <button onclick="document.getElementById('modal-container').classList.add('hidden')" class="flex-1 bg-slate-200 py-2 rounded-lg text-sm">Close</button>
+                        </div>
                     </div>
                 </div>`;
             document.getElementById('modal-content').innerHTML = modalHtml;
             document.getElementById('modal-container').classList.remove('hidden');
             showLoading(false);
+        }
+
+        // ================= 5. PROFILE & SETTINGS =================
+        function renderProfile() {
+            setActiveNav('nav-profile');
+            document.getElementById('main-content').innerHTML = `
+                <div class="max-w-sm mx-auto space-y-6">
+                    <div class="bg-white rounded-2xl shadow-sm p-6 text-center border border-slate-100 mt-6">
+                        <div class="w-24 h-24 rounded-full bg-slate-100 mx-auto mb-4 flex items-center justify-center text-3xl font-bold text-slate-400">
+                            ${(userProfile.display_name || 'U').substring(0,2)}
+                        </div>
+                        <h2 class="text-xl font-bold text-slate-800">${userProfile.full_name}</h2>
+                        <p class="text-slate-500 mb-4">${userProfile.email}</p>
+                        <div class="inline-block px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-xs font-bold mb-6">
+                            ${userProfile.team || 'No Team'}
+                        </div>
+                        <button onclick="handleLogout()" class="w-full py-3 border border-red-100 text-red-500 rounded-xl hover:bg-red-50 transition-colors">ออกจากระบบ</button>
+                    </div>
+                    <div class="bg-white rounded-2xl shadow-sm p-6 border border-slate-100">
+                        <h3 class="font-bold text-slate-700 mb-4">🔐 เปลี่ยนรหัสผ่าน</h3>
+                        <form onsubmit="handleChangePassword(event)">
+                            <div class="space-y-3">
+                                <input type="password" id="new-password" placeholder="รหัสผ่านใหม่ (ขั้นต่ำ 6 ตัว)" class="input-rounded w-full px-4 py-3 bg-slate-50 text-sm" required minlength="6">
+                                <button type="submit" class="w-full py-3 bg-blue-600 text-white rounded-xl font-bold">บันทึกรหัสผ่านใหม่</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function handleChangePassword(e) {
+            e.preventDefault();
+            const newPassword = document.getElementById('new-password').value;
+            showLoading(true);
+            const { error } = await supabaseClient.auth.updateUser({ password: newPassword });
+            showLoading(false);
+            if (error) alert('เกิดข้อผิดพลาด: ' + error.message);
+            else { alert('เปลี่ยนรหัสผ่านสำเร็จ! กรุณาเข้าสู่ระบบใหม่'); handleLogout(); }
         }
 
         // Init
