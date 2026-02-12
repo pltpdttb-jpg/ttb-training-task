@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ttb Trainer Task V5.0</title>
+    <title>ttb Trainer Task V5.1</title>
     <!-- Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -20,7 +20,6 @@
         .input-rounded { border-radius: 12px; border: 1px solid #e2e8f0; transition: all 0.2s; appearance: none; }
         .input-rounded:focus { border-color: #0056b3; box-shadow: 0 0 0 3px rgba(0, 86, 179, 0.1); outline: none; }
         .loader { border: 3px solid #f3f3f3; border-radius: 50%; border-top: 3px solid #002d63; width: 32px; height: 32px; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
         /* Calendar Styling */
         .fc { font-size: 0.8em; }
@@ -101,7 +100,7 @@
     <!-- LOGIN SCREEN -->
     <div id="login-screen" class="min-h-screen flex flex-col justify-center items-center p-8 bg-white absolute inset-0 z-[100]">
         <div class="w-20 h-20 rounded-2xl bg-gradient-primary flex items-center justify-center text-white font-bold text-3xl shadow-xl mb-6">ttb</div>
-        <h2 class="text-xl font-bold text-slate-800 mb-1">Trainer Task V5.0</h2>
+        <h2 class="text-xl font-bold text-slate-800 mb-1">Trainer Task V5.1</h2>
         <p class="text-slate-400 text-xs mb-8 text-center">ระบบบริหารจัดการงานสอน (Final)</p>
         <form id="login-form" class="w-full max-w-sm space-y-4" onsubmit="handleLogin(event)">
             <input type="text" id="login-id" required class="input-rounded w-full px-5 py-3.5 bg-slate-50 text-sm" placeholder="User ID หรือ Email">
@@ -241,8 +240,8 @@
                         </div>
                         <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm"><h3 class="text-sm font-bold text-slate-700 mb-2">จำนวนคลาสรายสัปดาห์</h3><canvas id="weeklyChart" height="100"></canvas></div>
                         <div class="space-y-4">
-                            <div><h3 class="font-bold text-slate-700 mb-2 flex items-center gap-2"><span class="w-2 h-2 bg-blue-500 rounded-full"></span> วันนี้</h3><div class="space-y-2">${upcomingTasks.filter(t=>t.date===todayStr).length===0?'<p class="text-xs text-slate-400 italic">ไม่มีงาน</p>':upcomingTasks.filter(t=>t.date===todayStr).map(t=>renderTaskCard(t, false, true)).join('')}</div></div>
-                            <div><h3 class="font-bold text-slate-700 mb-2 flex items-center gap-2"><span class="w-2 h-2 bg-orange-500 rounded-full"></span> พรุ่งนี้</h3><div class="space-y-2">${upcomingTasks.filter(t=>t.date===tomorrowStr).length===0?'<p class="text-xs text-slate-400 italic">ไม่มีงาน</p>':upcomingTasks.filter(t=>t.date===tomorrowStr).map(t=>renderTaskCard(t, false, true)).join('')}</div></div>
+                            <div><h3 class="font-bold text-slate-700 mb-2 flex items-center gap-2"><span class="w-2 h-2 bg-blue-500 rounded-full"></span> วันนี้</h3><div class="space-y-2">${upcomingTasks.filter(t=>t.date===todayStr).length===0?'<p class="text-xs text-slate-400 italic">ไม่มีงาน</p>':upcomingTasks.filter(t=>t.date===todayStr).map(t=>renderTaskCard(t)).join('')}</div></div>
+                            <div><h3 class="font-bold text-slate-700 mb-2 flex items-center gap-2"><span class="w-2 h-2 bg-orange-500 rounded-full"></span> พรุ่งนี้</h3><div class="space-y-2">${upcomingTasks.filter(t=>t.date===tomorrowStr).length===0?'<p class="text-xs text-slate-400 italic">ไม่มีงาน</p>':upcomingTasks.filter(t=>t.date===tomorrowStr).map(t=>renderTaskCard(t)).join('')}</div></div>
                         </div>
                     </div>`;
 
@@ -311,7 +310,7 @@
             document.getElementById('modal-container').classList.remove('hidden');
         }
 
-        // ================= 3. TASK CARD & DETAIL POPUP (V5.0) =================
+        // ================= 3. TASK CARD & POPUP =================
         function renderTaskCard(t, showTrainer = false, clickToPopup = false) {
             const taskStr = buildTaskString(t);
             const trainerName = t.profiles ? t.profiles.display_name : 'Unknown';
@@ -349,7 +348,6 @@
                         <h3 class="text-xl font-bold text-slate-800">รายละเอียดงาน</h3>
                         <button onclick="document.getElementById('modal-container').classList.add('hidden')" class="text-slate-400"><i class="fa-solid fa-xmark text-xl"></i></button>
                     </div>
-                    
                     <div class="space-y-4">
                         <div class="flex items-center gap-3">
                             <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">${getAvatarInitials(t.profiles.full_name)}</div>
@@ -358,7 +356,6 @@
                                 <p class="text-xs text-slate-500">${t.profiles.display_name}</p>
                             </div>
                         </div>
-                        
                         <div class="bg-slate-50 p-4 rounded-xl space-y-3 border border-slate-100">
                             ${t.is_leave 
                                 ? `<div class="flex items-center gap-3 text-red-500"><i class="fa-solid fa-umbrella-beach w-5"></i><span class="font-bold">${t.leave_type}</span></div>` 
@@ -370,7 +367,6 @@
                             `}
                         </div>
                     </div>
-
                     <div class="mt-6 flex gap-3">
                         <button onclick="showDateDetails('${t.date}')" class="flex-1 py-3 border border-slate-200 rounded-xl text-slate-600 font-bold text-sm">Back</button>
                         ${canEdit ? `
@@ -396,7 +392,7 @@
                         <button onclick="renderReportsHub('line')" class="flex-1 py-2 px-3 text-xs font-bold rounded-lg whitespace-nowrap ${activeTab==='line'?'tab-active':'tab-inactive'}">💬 Line</button>
                     </div>
                     <div id="report-content"></div>
-                    ${isAdmin ? `<button onclick="exportData()" class="w-full bg-slate-800 text-white p-3 rounded-xl shadow-md mt-4 flex items-center justify-center gap-2"><i class="fa-solid fa-file-excel"></i> Export Data (Excel)</button>` : ''}
+                    ${isAdmin ? `<button onclick="renderExportModal()" class="w-full bg-slate-800 text-white p-3 rounded-xl shadow-md mt-4 flex items-center justify-center gap-2"><i class="fa-solid fa-file-excel"></i> Export Data (Excel)</button>` : ''}
                 </div>`;
             document.getElementById('main-content').innerHTML = html;
             if(activeTab === 'dashboard') renderTeamDashboard();
@@ -405,10 +401,103 @@
             else if(activeTab === 'line') generateLineReport();
         }
 
-        async function exportData() {
+        // --- NEW: Export Modal ---
+        function renderExportModal() {
+            const modalContent = document.getElementById('modal-content');
+            modalContent.innerHTML = `
+                <div class="p-6">
+                    <h3 class="font-bold text-lg mb-4">📥 Export Data Options</h3>
+                    
+                    <!-- Time Range -->
+                    <div class="mb-4">
+                        <label class="block text-xs font-bold text-slate-500 mb-1">1. ช่วงเวลา</label>
+                        <select id="exp-range" class="input-rounded w-full px-4 py-2 text-sm" onchange="toggleExportDates()">
+                            <option value="mtd">Month to Date (เดือนนี้)</option>
+                            <option value="ytd">Year to Date (ปีนี้)</option>
+                            <option value="custom">กำหนดเอง (Custom)</option>
+                        </select>
+                        <div id="exp-dates" class="hidden grid-cols-2 gap-2 mt-2">
+                            <input type="date" id="exp-start" class="input-rounded w-full px-2 py-2 text-sm">
+                            <input type="date" id="exp-end" class="input-rounded w-full px-2 py-2 text-sm">
+                        </div>
+                    </div>
+
+                    <!-- Targets -->
+                    <div class="mb-4">
+                        <label class="block text-xs font-bold text-slate-500 mb-1">2. เลือกวิทยากร</label>
+                        <select id="exp-target" class="input-rounded w-full px-4 py-2 text-sm" onchange="toggleExportUsers()">
+                            <option value="all">ทุกคน (All)</option>
+                            <option value="specialist">Training Specialist</option>
+                            <option value="mandatory">Mandatory</option>
+                            <option value="specific">ระบุบุคคล...</option>
+                        </select>
+                        <div id="exp-users" class="hidden mt-2 p-2 bg-slate-50 rounded-lg max-h-40 overflow-y-auto">
+                            ${allProfiles.filter(p=>p.role!=='master').map(p=>`<label class="flex items-center gap-2 text-sm mb-1"><input type="checkbox" value="${p.id}" class="exp-user-cb"> ${formatNameShort(p)}</label>`).join('')}
+                        </div>
+                    </div>
+
+                    <div class="flex gap-2 mt-6">
+                        <button onclick="document.getElementById('modal-container').classList.add('hidden')" class="flex-1 py-3 border border-slate-200 rounded-xl text-sm font-bold">Cancel</button>
+                        <button onclick="executeExport()" class="flex-1 py-3 bg-green-600 text-white rounded-xl text-sm font-bold shadow-md">Download</button>
+                    </div>
+                </div>
+            `;
+            document.getElementById('modal-container').classList.remove('hidden');
+        }
+
+        function toggleExportDates() {
+            const val = document.getElementById('exp-range').value;
+            document.getElementById('exp-dates').classList.toggle('hidden', val !== 'custom');
+        }
+        function toggleExportUsers() {
+            const val = document.getElementById('exp-target').value;
+            document.getElementById('exp-users').classList.toggle('hidden', val !== 'specific');
+        }
+
+        async function executeExport() {
             showLoading(true);
             try {
-                const { data: tasks } = await supabaseClient.from('tasks').select('*, profiles!tasks_trainer_id_fkey(full_name, team, role)');
+                // 1. Determine Dates
+                const range = document.getElementById('exp-range').value;
+                let start, end;
+                const now = new Date();
+                if (range === 'mtd') {
+                    start = new Date(now.getFullYear(), now.getMonth(), 1);
+                    end = now;
+                } else if (range === 'ytd') {
+                    start = new Date(now.getFullYear(), 0, 1);
+                    end = now;
+                } else {
+                    const sVal = document.getElementById('exp-start').value;
+                    const eVal = document.getElementById('exp-end').value;
+                    if (!sVal || !eVal) throw new Error('กรุณาระบุวันที่เริ่มต้นและสิ้นสุด');
+                    start = new Date(sVal);
+                    end = new Date(eVal);
+                }
+
+                // 2. Determine Users
+                const target = document.getElementById('exp-target').value;
+                let userIds = [];
+                if (target === 'all') userIds = allProfiles.filter(p=>p.role!=='master').map(p=>p.id);
+                else if (target === 'specialist') userIds = allProfiles.filter(p=>p.team==='Training Specialist').map(p=>p.id);
+                else if (target === 'mandatory') userIds = allProfiles.filter(p=>p.team==='Mandatory').map(p=>p.id);
+                else {
+                    userIds = Array.from(document.querySelectorAll('.exp-user-cb:checked')).map(cb=>cb.value);
+                    if (userIds.length === 0) throw new Error('กรุณาเลือกวิทยากรอย่างน้อย 1 คน');
+                }
+
+                // 3. Query Supabase
+                const { data: tasks, error } = await supabaseClient
+                    .from('tasks')
+                    .select('*, profiles!tasks_trainer_id_fkey(full_name, team, role)')
+                    .in('trainer_id', userIds)
+                    .gte('date', start.toISOString().split('T')[0])
+                    .lte('date', end.toISOString().split('T')[0]);
+
+                if (error) throw error;
+                if (!tasks || tasks.length === 0) throw new Error('ไม่พบข้อมูลในช่วงเวลาและเงื่อนไขที่เลือก');
+
+                // 4. Generate Excel
                 const exportData = tasks.map(t => ({
                     Date: t.date,
                     Start: t.start_time,
@@ -422,13 +511,22 @@
                     IsLeave: t.is_leave ? 'Yes' : 'No',
                     LeaveType: t.leave_type
                 }));
+
                 const ws = XLSX.utils.json_to_sheet(exportData);
                 const wb = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(wb, ws, "Tasks");
                 XLSX.writeFile(wb, `Trainer_Tasks_Export_${new Date().toISOString().split('T')[0]}.xlsx`);
-            } catch(e) { alert('Export Failed: ' + e.message); } finally { showLoading(false); }
+                
+                document.getElementById('modal-container').classList.add('hidden'); // Close modal on success
+
+            } catch (e) {
+                alert('Export Failed: ' + e.message);
+            } finally {
+                showLoading(false);
+            }
         }
 
+        // ... [Old Functions: renderTeamDashboard, etc.] ...
         async function renderTeamDashboard(){showLoading(true);const now=new Date();const start=new Date(now.getFullYear(),now.getMonth(),1).toISOString().split('T')[0];const end=new Date(now.getFullYear(),now.getMonth()+1,0).toISOString().split('T')[0];try{const{data:tasks}=await supabaseClient.from('tasks').select('*').gte('date',start).lte('date',end);const workload={};tasks.forEach(t=>{workload[t.trainer_id]=(workload[t.trainer_id]||0)+1});const labels=[],data=[];allProfiles.filter(p=>p.role!=='master').forEach(p=>{labels.push(p.display_name);data.push(workload[p.id]||0)});document.getElementById('report-content').innerHTML=`<div class="grid grid-cols-2 gap-3 mb-4"><div class="bg-indigo-50 p-4 rounded-xl text-center"><p class="text-xs text-indigo-500">Total Jobs</p><p class="text-2xl font-bold text-indigo-700">${tasks.length}</p></div><div class="bg-amber-50 p-4 rounded-xl text-center"><p class="text-xs text-amber-500">Total Hours</p><p class="text-2xl font-bold text-amber-700">${tasks.reduce((a,t)=>a+(t.is_leave?0:(parseInt(t.end_time)-parseInt(t.start_time))),0)}</p></div></div><div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm"><canvas id="teamChart"></canvas></div>`;if(teamChart)teamChart.destroy();teamChart=new Chart(document.getElementById('teamChart'),{type:'bar',data:{labels:labels,datasets:[{label:'Jobs',data:data,backgroundColor:'#6366f1',borderRadius:4}]},options:{scales:{y:{beginAtZero:true}}}});}catch(e){alert(e.message)}finally{showLoading(false)}}
         function renderDailyReportSelector(){document.getElementById('report-content').innerHTML=`<div class="grid grid-cols-2 gap-3"><button onclick="renderDailyResult('today')" class="bg-white p-4 rounded-xl shadow-sm text-center">วันนี้</button><button onclick="renderDailyResult('tomorrow')" class="bg-white p-4 rounded-xl shadow-sm text-center">พรุ่งนี้</button></div><div id="daily-result" class="mt-4 space-y-2"></div>`}
         async function renderDailyResult(day){showLoading(true);try{const d=new Date();if(day==='tomorrow')d.setDate(d.getDate()+1);const dateStr=d.toISOString().split('T')[0];const{data:tasks}=await supabaseClient.from('tasks').select('*,profiles!tasks_trainer_id_fkey(full_name,display_name)').eq('date',dateStr).order('start_time');document.getElementById('daily-result').innerHTML=tasks.length===0?'<p class="text-center text-slate-400">No Tasks</p>':tasks.map(t=>renderTaskCard(t,true,true)).join('')}catch(e){alert(e.message)}finally{showLoading(false)}}
@@ -496,6 +594,37 @@
             const isLeave = document.getElementById('is-leave').checked;
             const payload = { date: document.getElementById('date').value, is_leave: isLeave, created_by: currentUser.id };
             
+            // Conflict Check
+            if(!taskId) {
+                for(const tid of trainers) {
+                    const { data: existing } = await supabaseClient.from('tasks').select('*').eq('trainer_id', tid).eq('date', payload.date);
+                    if(existing && existing.length > 0) {
+                        let conflictType = 'none'; let conflictTask = null;
+                        const newFormat = document.getElementById('format').value;
+                        const newStart = document.getElementById('start-time').value;
+                        const newEnd = document.getElementById('end-time').value;
+
+                        for(const t of existing) {
+                            if(t.is_leave) { conflictType = 'soft'; conflictTask = t; break; }
+                            if(isLeave) { conflictType = 'soft'; conflictTask = t; break; }
+
+                            const hasTimeNew = newFormat !== '' && newStart && newStart !== '00:00';
+                            const hasTimeOld = t.format && t.start_time !== '00:00:00' && t.start_time !== '00:00';
+
+                            if(hasTimeNew && hasTimeOld) {
+                                if(newStart < t.end_time && newEnd > t.start_time) { conflictType = 'hard'; conflictTask = t; break; }
+                            }
+                            if(conflictType !== 'hard') { conflictType = 'soft'; conflictTask = t; }
+                        }
+
+                        if(conflictType === 'hard') { alert(`ไม่สามารถบันทึกได้: เวลาชนกับงาน "${conflictTask.course_details}"`); showLoading(false); return; }
+                        if(conflictType === 'soft') {
+                            if(!confirm(`มีงาน "${conflictTask.is_leave ? conflictTask.leave_type : conflictTask.course_details}" อยู่ในวันนี้แล้ว ยืนยันที่จะบันทึกเพิ่มหรือไม่?`)) { showLoading(false); return; }
+                        }
+                    }
+                }
+            }
+
             if(isLeave) { payload.leave_type = document.getElementById('leave-type').value; payload.start_time='00:00'; payload.end_time='00:00'; }
             else {
                 payload.course_details = document.getElementById('course-details').value;
@@ -520,7 +649,7 @@
                 await supabaseClient.from('tasks').delete().eq('id', taskId); 
                 if(isFromModal) {
                     document.getElementById('modal-container').classList.add('hidden');
-                    renderCalendar(); // Refresh calendar to remove icon
+                    renderCalendar(); 
                 } else {
                     renderDashboard(); 
                 }
