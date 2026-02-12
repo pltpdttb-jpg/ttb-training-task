@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ttb Trainer Task V6.2</title>
+    <title>ttb Trainer Task V6.3</title>
     <!-- Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -121,8 +121,8 @@
     <!-- ================= LOGIN SCREEN ================= -->
     <div id="login-screen" class="min-h-screen flex flex-col justify-center items-center p-8 bg-white absolute inset-0 z-[100]">
         <div class="w-20 h-20 rounded-2xl bg-gradient-primary flex items-center justify-center text-white font-bold text-3xl shadow-xl mb-6">ttb</div>
-        <h2 class="text-xl font-bold text-slate-800 mb-1">Trainer Task V6.2</h2>
-        <p class="text-slate-400 text-xs mb-8 text-center">Unified System (Secured)</p>
+        <h2 class="text-xl font-bold text-slate-800 mb-1">Trainer Task V6.3</h2>
+        <p class="text-slate-400 text-xs mb-8 text-center">Unified System (Optimized)</p>
         <form id="login-form" class="w-full max-w-sm space-y-4" onsubmit="handleLogin(event)">
             <input type="text" id="login-id" required class="input-rounded w-full px-5 py-3.5 bg-slate-50 text-sm" placeholder="User ID หรือ Email">
             <input type="password" id="login-password" required class="input-rounded w-full px-5 py-3.5 bg-slate-50 text-sm" placeholder="••••••••">
@@ -288,7 +288,6 @@
         async function initApp(user) {
             currentUser = user;
             try {
-                // Fetch current user profile
                 const { data: profile, error: profErr } = await supabaseClient.from('profiles').select('*').eq('id', user.id).single();
                 if (profErr || !profile) {
                     console.warn("ไม่พบ Profile ในฐานข้อมูล ใช้ค่า Default");
@@ -297,24 +296,20 @@
                     userProfile = profile;
                 }
 
-                // Fetch all profiles (WITH SAFETY CHECKS)
                 const { data: profiles } = await supabaseClient.from('profiles').select('*');
                 if (profiles) {
                     allProfiles = profiles.filter(p => {
                         const fname = p.full_name || '';
                         const eml = p.email || '';
                         const uid = p.user_id_code || '';
-                        // Filter out specific accounts safely
                         return !fname.includes('อลงกรณ์') && !eml.includes('korn.ak28') && uid !== 'ttb_ap';
                     });
                 }
 
-                // Update Header UI
                 document.getElementById('header-name').textContent = formatNameShort(userProfile);
                 document.getElementById('header-role').textContent = (userProfile.role || 'trainer').toUpperCase();
                 document.getElementById('header-avatar').textContent = getAvatarInitials(userProfile.full_name);
                 
-                // Show Main App
                 document.getElementById('login-screen').classList.add('hidden');
                 document.getElementById('app').classList.remove('hidden');
                 
@@ -1079,7 +1074,7 @@
             } catch(e) { alert(e.message); } finally { showLoading(false); }
         }
 
-        // --- LINE REPORT ---
+        // --- LINE REPORT (UPDATED V6.3 Logic) ---
         async function generateLineReport() {
             showLoading(true);
             try {
@@ -1101,7 +1096,7 @@
                     if(!nameStr) return 99;
                     const firstName = nameStr.split(' ')[0];
                     const i = orderArr.findIndex(k => firstName.includes(k));
-                    return i === -1 ? 99 : i; // ถ้าไม่เจอในลิสต์ให้ไปอยู่ท้ายสุด (99)
+                    return i === -1 ? 99 : i; 
                 };
 
                 const printTeam = (teamName, orderArr) => {
@@ -1115,13 +1110,12 @@
                         const memberTasks = tasks.filter(k => k.trainer_id === m.id);
                         msg += `● ${formatNameShort(m)}\n`;
                         
-                        if (memberTasks.length === 0) {
-                            msg += `- Office\n`; // Default if no tasks
-                        } else {
+                        if (memberTasks.length > 0) {
                             memberTasks.forEach(k => {
                                 msg += k.is_leave ? `- ${k.leave_type}\n` : `- ${buildTaskString(k)}\n`;
                             });
                         }
+                        // If no tasks, do NOTHING (empty line effectively via next \n)
                         msg += `\n`;
                     });
                     msg += `.........................................\n`;
@@ -1132,12 +1126,26 @@
 
                 document.getElementById('modal-content').innerHTML = `
                     <div class="p-4">
-                        <h3 class="font-bold mb-2">Line Report (สำหรับพรุ่งนี้)</h3>
-                        <textarea class="w-full h-64 text-xs border p-2 rounded bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500">${msg}</textarea>
-                        <button onclick="document.getElementById('modal-container').classList.add('hidden')" class="w-full mt-3 py-3 bg-slate-200 font-bold text-slate-700 rounded-xl hover:bg-slate-300">Close</button>
+                        <h3 class="font-bold mb-2">Line Report (พรุ่งนี้)</h3>
+                        <textarea id="line-report-text" class="w-full h-64 text-xs border p-2 rounded bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500">${msg}</textarea>
+                        <div class="flex gap-2 mt-3">
+                            <button onclick="copyLineReportContent()" class="flex-1 py-3 bg-green-500 text-white font-bold rounded-xl hover:bg-green-600 shadow-md">
+                                <i class="fa-solid fa-copy mr-2"></i> คัดลอกทั้งหมด
+                            </button>
+                            <button onclick="document.getElementById('modal-container').classList.add('hidden')" class="w-1/3 py-3 bg-slate-200 font-bold text-slate-700 rounded-xl hover:bg-slate-300">ปิด</button>
+                        </div>
                     </div>`;
                 document.getElementById('modal-container').classList.remove('hidden');
             } catch(e) { alert(e.message); } finally { showLoading(false); }
+        }
+
+        function copyLineReportContent() {
+            const textArea = document.getElementById('line-report-text');
+            textArea.select();
+            textArea.setSelectionRange(0, 99999); /* For mobile devices */
+            navigator.clipboard.writeText(textArea.value).then(() => {
+                alert("คัดลอกเรียบร้อยแล้ว!");
+            });
         }
 
         // --- 6. PROFILE & USER MANAGEMENT ---
@@ -1201,8 +1209,7 @@
 
         async function handleCreateUser(e) {
             e.preventDefault();
-            if(!confirm('ยืนยันการสร้างผู้ใช้ใหม่? (ระบบจะนำคุณ Login เข้าสู่บัญชีใหม่ทันที)')) return;
-            
+            if(!confirm('ยืนยันสร้าง User? (ระบบจะ Login เป็น User ใหม่ทันที)')) return;
             showLoading(true);
             const email = document.getElementById('new-user-email').value;
             const password = document.getElementById('new-user-pass').value;
@@ -1210,37 +1217,14 @@
             const display = document.getElementById('new-user-display').value;
             const role = document.getElementById('new-user-role').value;
             const team = document.getElementById('new-user-team').value;
-            const userIdCode = email.split('@')[0];
 
             try {
-                // 1. Create Auth User
-                const { data: authData, error: authError } = await supabaseClient.auth.signUp({ 
-                    email, 
-                    password, 
-                    options: { data: { full_name: fullName } } 
-                });
+                const { data: authData, error: authError } = await supabaseClient.auth.signUp({ email, password, options: { data: { full_name: fullName } } });
                 if(authError) throw authError;
-
-                // 2. Insert into Profiles
-                const { error: profileError } = await supabaseClient.from('profiles').insert({ 
-                    id: authData.user.id, 
-                    email: email, 
-                    full_name: fullName, 
-                    display_name: display, 
-                    role: role, 
-                    team: team, 
-                    user_id_code: userIdCode 
-                });
+                const { error: profileError } = await supabaseClient.from('profiles').insert({ id: authData.user.id, email, full_name: fullName, display_name: display, role, team, user_id_code: email.split('@')[0] });
                 if(profileError) throw profileError;
-
-                alert('สร้างผู้ใช้ใหม่สำเร็จ!'); 
-                window.location.reload();
-            } catch (err) { 
-                alert('Error: ' + err.message); 
-                window.location.reload(); 
-            } finally { 
-                showLoading(false); 
-            }
+                alert('สร้าง User สำเร็จ!'); window.location.reload();
+            } catch (err) { alert('Error: ' + err.message); window.location.reload(); } finally { showLoading(false); }
         }
 
         // ================= 7. ANALYTICS LAYER (ADMIN ONLY) =================
@@ -1342,7 +1326,7 @@
             let max = -1, pIndex = 0;
             monthlyData.forEach((d, i) => { if(d.jobs > max) { max = d.jobs; pIndex = i; } });
             
-            document.getElementById('peak-month-text').innerHTML = `Peak Month: <b>${months[pIndex]}</b> (${max} assignments)`;
+            document.getElementById('peak-month-text').innerHTML = `Peak Month: <b>${months[pIndex]}</b> (${max} jobs)`;
             updateTrendChart('jobs'); // default view
         }
 
