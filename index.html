@@ -130,11 +130,21 @@
 
         <!-- Nav -->
         <nav class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-lg bg-white border-t border-slate-100 flex justify-around items-center py-2 z-50">
-            <button onclick="renderDashboard()" class="nav-btn flex flex-col items-center gap-1 p-2 text-blue-600" id="nav-home"><i class="fa-solid fa-chart-line text-lg"></i><span class="text-[9px]">Dashboard</span></button>
-            <button onclick="renderCalendar()" class="nav-btn flex flex-col items-center gap-1 p-2 text-slate-400" id="nav-calendar"><i class="fa-solid fa-calendar text-lg"></i><span class="text-[9px]">ตาราง</span></button>
-            <button onclick="renderCreateTask()" class="w-12 h-12 bg-gradient-primary rounded-full text-white shadow-lg -mt-8 border-4 border-white flex items-center justify-center active:scale-95 transition-transform"><i class="fa-solid fa-plus text-xl"></i></button>
-            <button onclick="renderReportsHub('dashboard')" id="nav-reports" class="nav-btn flex flex-col items-center gap-1 p-2 text-slate-400"><i class="fa-solid fa-folder-open text-lg"></i><span class="text-[9px]">รายงาน</span></button>
-            <button onclick="renderProfile()" class="nav-btn flex flex-col items-center gap-1 p-2 text-slate-400" id="nav-profile"><i class="fa-solid fa-user text-lg"></i><span class="text-[9px]">โปรไฟล์</span></button>
+            <button onclick="renderDashboard()" class="nav-btn flex flex-col items-center gap-1 p-2 text-blue-600" id="nav-home">
+                <i class="fa-solid fa-chart-line text-lg"></i><span class="text-[9px]">Dashboard</span>
+            </button>
+            <button onclick="renderCalendar()" class="nav-btn flex flex-col items-center gap-1 p-2 text-slate-400" id="nav-calendar">
+                <i class="fa-solid fa-calendar text-lg"></i><span class="text-[9px]">ตาราง</span>
+            </button>
+            <button onclick="renderCreateTask()" class="w-12 h-12 bg-gradient-primary rounded-full text-white shadow-lg -mt-8 border-4 border-white flex items-center justify-center active:scale-95 transition-transform">
+                <i class="fa-solid fa-plus text-xl"></i>
+            </button>
+            <button onclick="renderReportsHub('dashboard')" id="nav-reports" class="nav-btn flex flex-col items-center gap-1 p-2 text-slate-400">
+                <i class="fa-solid fa-folder-open text-lg"></i><span class="text-[9px]">รายงาน</span>
+            </button>
+            <button onclick="renderProfile()" class="nav-btn flex flex-col items-center gap-1 p-2 text-slate-400" id="nav-profile">
+                <i class="fa-solid fa-user text-lg"></i><span class="text-[9px]">โปรไฟล์</span>
+            </button>
         </nav>
     </div>
 
@@ -199,7 +209,7 @@
 
         async function handleLogout() { if(confirm('ยืนยันออกจากระบบ?')) { await supabaseClient.auth.signOut(); window.location.reload(); } }
 
-        // ================= 1. DASHBOARD =================
+        // ================= 1. PERSONAL DASHBOARD =================
         async function renderDashboard() {
             showLoading(true); setActiveNav('nav-home');
             try {
@@ -231,8 +241,8 @@
                         </div>
                         <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm"><h3 class="text-sm font-bold text-slate-700 mb-2">จำนวนคลาสรายสัปดาห์</h3><canvas id="weeklyChart" height="100"></canvas></div>
                         <div class="space-y-4">
-                            <div><h3 class="font-bold text-slate-700 mb-2 flex items-center gap-2"><span class="w-2 h-2 bg-blue-500 rounded-full"></span> วันนี้</h3><div class="space-y-2">${upcomingTasks.filter(t=>t.date===todayStr).length===0?'<p class="text-xs text-slate-400 italic">ไม่มีงาน</p>':upcomingTasks.filter(t=>t.date===todayStr).map(t=>renderTaskCard(t, false, false)).join('')}</div></div>
-                            <div><h3 class="font-bold text-slate-700 mb-2 flex items-center gap-2"><span class="w-2 h-2 bg-orange-500 rounded-full"></span> พรุ่งนี้</h3><div class="space-y-2">${upcomingTasks.filter(t=>t.date===tomorrowStr).length===0?'<p class="text-xs text-slate-400 italic">ไม่มีงาน</p>':upcomingTasks.filter(t=>t.date===tomorrowStr).map(t=>renderTaskCard(t, false, false)).join('')}</div></div>
+                            <div><h3 class="font-bold text-slate-700 mb-2 flex items-center gap-2"><span class="w-2 h-2 bg-blue-500 rounded-full"></span> วันนี้</h3><div class="space-y-2">${upcomingTasks.filter(t=>t.date===todayStr).length===0?'<p class="text-xs text-slate-400 italic">ไม่มีงาน</p>':upcomingTasks.filter(t=>t.date===todayStr).map(t=>renderTaskCard(t, false, true)).join('')}</div></div>
+                            <div><h3 class="font-bold text-slate-700 mb-2 flex items-center gap-2"><span class="w-2 h-2 bg-orange-500 rounded-full"></span> พรุ่งนี้</h3><div class="space-y-2">${upcomingTasks.filter(t=>t.date===tomorrowStr).length===0?'<p class="text-xs text-slate-400 italic">ไม่มีงาน</p>':upcomingTasks.filter(t=>t.date===tomorrowStr).map(t=>renderTaskCard(t, false, true)).join('')}</div></div>
                         </div>
                     </div>`;
 
@@ -301,8 +311,7 @@
             document.getElementById('modal-container').classList.remove('hidden');
         }
 
-        // ================= 3. TASK CARD & DETAIL POPUP =================
-        // V5.0 Feature: Card Click -> Open Detail Popup
+        // ================= 3. TASK CARD & DETAIL POPUP (V5.0) =================
         function renderTaskCard(t, showTrainer = false, clickToPopup = false) {
             const taskStr = buildTaskString(t);
             const trainerName = t.profiles ? t.profiles.display_name : 'Unknown';
@@ -420,11 +429,9 @@
             } catch(e) { alert('Export Failed: ' + e.message); } finally { showLoading(false); }
         }
 
-        // ... [Functions: renderTeamDashboard, renderDailyReportSelector, renderDailyResult, renderAvailabilitySelector, renderAvailabilityCheck, runAvailabilityCheck, generateLineReport - Same as V4.9] ...
-        // (Due to length limits, I'm pasting the compact versions. They are logic-identical to V4.9)
         async function renderTeamDashboard(){showLoading(true);const now=new Date();const start=new Date(now.getFullYear(),now.getMonth(),1).toISOString().split('T')[0];const end=new Date(now.getFullYear(),now.getMonth()+1,0).toISOString().split('T')[0];try{const{data:tasks}=await supabaseClient.from('tasks').select('*').gte('date',start).lte('date',end);const workload={};tasks.forEach(t=>{workload[t.trainer_id]=(workload[t.trainer_id]||0)+1});const labels=[],data=[];allProfiles.filter(p=>p.role!=='master').forEach(p=>{labels.push(p.display_name);data.push(workload[p.id]||0)});document.getElementById('report-content').innerHTML=`<div class="grid grid-cols-2 gap-3 mb-4"><div class="bg-indigo-50 p-4 rounded-xl text-center"><p class="text-xs text-indigo-500">Total Jobs</p><p class="text-2xl font-bold text-indigo-700">${tasks.length}</p></div><div class="bg-amber-50 p-4 rounded-xl text-center"><p class="text-xs text-amber-500">Total Hours</p><p class="text-2xl font-bold text-amber-700">${tasks.reduce((a,t)=>a+(t.is_leave?0:(parseInt(t.end_time)-parseInt(t.start_time))),0)}</p></div></div><div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm"><canvas id="teamChart"></canvas></div>`;if(teamChart)teamChart.destroy();teamChart=new Chart(document.getElementById('teamChart'),{type:'bar',data:{labels:labels,datasets:[{label:'Jobs',data:data,backgroundColor:'#6366f1',borderRadius:4}]},options:{scales:{y:{beginAtZero:true}}}});}catch(e){alert(e.message)}finally{showLoading(false)}}
         function renderDailyReportSelector(){document.getElementById('report-content').innerHTML=`<div class="grid grid-cols-2 gap-3"><button onclick="renderDailyResult('today')" class="bg-white p-4 rounded-xl shadow-sm text-center">วันนี้</button><button onclick="renderDailyResult('tomorrow')" class="bg-white p-4 rounded-xl shadow-sm text-center">พรุ่งนี้</button></div><div id="daily-result" class="mt-4 space-y-2"></div>`}
-        async function renderDailyResult(day){showLoading(true);try{const d=new Date();if(day==='tomorrow')d.setDate(d.getDate()+1);const dateStr=d.toISOString().split('T')[0];const{data:tasks}=await supabaseClient.from('tasks').select('*,profiles!tasks_trainer_id_fkey(full_name,display_name)').eq('date',dateStr).order('start_time');document.getElementById('daily-result').innerHTML=tasks.length===0?'<p class="text-center text-slate-400">No Tasks</p>':tasks.map(t=>renderTaskCard(t,true,false)).join('')}catch(e){alert(e.message)}finally{showLoading(false)}}
+        async function renderDailyResult(day){showLoading(true);try{const d=new Date();if(day==='tomorrow')d.setDate(d.getDate()+1);const dateStr=d.toISOString().split('T')[0];const{data:tasks}=await supabaseClient.from('tasks').select('*,profiles!tasks_trainer_id_fkey(full_name,display_name)').eq('date',dateStr).order('start_time');document.getElementById('daily-result').innerHTML=tasks.length===0?'<p class="text-center text-slate-400">No Tasks</p>':tasks.map(t=>renderTaskCard(t,true,true)).join('')}catch(e){alert(e.message)}finally{showLoading(false)}}
         function renderAvailabilitySelector(){renderAvailabilityCheck()}
         function renderAvailabilityCheck(){document.getElementById('report-content').innerHTML=`<div class="bg-white p-5 rounded-2xl shadow-sm space-y-4"><select id="av-group" class="input-rounded w-full px-4 py-2 text-sm"><option value="all">All</option><option value="specialist">Specialist</option><option value="mandatory">Mandatory</option></select><select id="av-mode" class="input-rounded w-full px-4 py-2 text-sm"><option value="earliest">Earliest</option><option value="month">Month</option></select><input type="month" id="av-month" class="hidden input-rounded w-full px-4 py-2 text-sm"><button onclick="runAvailabilityCheck()" class="w-full bg-blue-600 text-white py-2 rounded-xl">Check</button></div><div id="av-result" class="hidden mt-4"></div>`; document.getElementById('av-mode').onchange=function(){document.getElementById('av-month').classList.toggle('hidden',this.value!=='month')}}
         async function runAvailabilityCheck(){showLoading(true);try{const group=document.getElementById('av-group').value;const mode=document.getElementById('av-mode').value;let ids=[];if(group==='all')ids=allProfiles.filter(p=>p.role!=='master').map(p=>p.id);else if(group==='specialist')ids=allProfiles.filter(p=>p.team==='Training Specialist').map(p=>p.id);else ids=allProfiles.filter(p=>p.team==='Mandatory').map(p=>p.id);let start=new Date(),end=new Date();if(mode==='month'){const m=document.getElementById('av-month').value;if(!m)throw new Error('Select month');start=new Date(m+'-01');end=new Date(start.getFullYear(),start.getMonth()+1,0)}else end.setDate(start.getDate()+60);const{data:tasks}=await supabaseClient.from('tasks').select('date,trainer_id').in('trainer_id',ids).gte('date',start.toISOString().split('T')[0]).lte('date',end.toISOString().split('T')[0]);const busy={};tasks.forEach(t=>{if(!busy[t.date])busy[t.date]=new Set();busy[t.date].add(t.trainer_id)});let html='';let curr=new Date(start);if(mode==='earliest'){while(curr<=end){const d=curr.toISOString().split('T')[0];const conflict=[...(busy[d]||[])].some(uid=>ids.includes(uid));if(!conflict&&curr.getDay()!==0&&curr.getDay()!==6){html=`<div class="text-center font-bold text-green-600 text-lg">${formatDateThai(d)}</div>`;break}curr.setDate(curr.getDate()+1)}}else{html='<div class="grid grid-cols-4 gap-2">';while(curr<=end){const d=curr.toISOString().split('T')[0];const conflict=[...(busy[d]||[])].some(uid=>ids.includes(uid));if(!conflict&&curr.getDay()!==0&&curr.getDay()!==6)html+=`<div class="bg-green-100 text-green-700 p-2 rounded text-center text-xs">${curr.getDate()}</div>`;curr.setDate(curr.getDate()+1)}html+='</div>'}document.getElementById('av-result').innerHTML=html||'Not found';document.getElementById('av-result').classList.remove('hidden')}catch(e){alert(e.message)}finally{showLoading(false)}}
@@ -465,7 +472,8 @@
                     </form></div>`;
             document.getElementById('main-content').innerHTML = html;
             if(task?.is_leave) toggleLeaveMode();
-            toggleTimeFields(); showLoading(false);
+            toggleTimeFields(); 
+            showLoading(false);
         }
 
         function toggleLeaveMode() {
