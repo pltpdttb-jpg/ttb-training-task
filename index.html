@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ttb Trainer Task V6.1</title>
+    <title>ttb Trainer Task V6.2</title>
     <!-- Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -80,8 +80,10 @@
 
         const formatNameShort = (profile) => {
             if (!profile) return "Unknown";
-            const firstName = profile.full_name.split(' ')[0];
-            return `${firstName} (${profile.display_name})`;
+            const fName = profile.full_name || 'Unknown';
+            const firstName = fName.split(' ')[0];
+            const dName = profile.display_name ? ` (${profile.display_name})` : '';
+            return `${firstName}${dName}`;
         };
 
         const formatTime = (t) => t ? t.substring(0, 5) : '00:00';
@@ -103,7 +105,7 @@
     <!-- LOGIN SCREEN -->
     <div id="login-screen" class="min-h-screen flex flex-col justify-center items-center p-8 bg-white absolute inset-0 z-[100]">
         <div class="w-20 h-20 rounded-2xl bg-gradient-primary flex items-center justify-center text-white font-bold text-3xl shadow-xl mb-6">ttb</div>
-        <h2 class="text-xl font-bold text-slate-800 mb-1">Trainer Task V6.1</h2>
+        <h2 class="text-xl font-bold text-slate-800 mb-1">Trainer Task V6.2</h2>
         <p class="text-slate-400 text-xs mb-8 text-center">Unified System</p>
         <form id="login-form" class="w-full max-w-sm space-y-4" onsubmit="handleLogin(event)">
             <input type="text" id="login-id" required class="input-rounded w-full px-5 py-3.5 bg-slate-50 text-sm" placeholder="User ID หรือ Email">
@@ -237,10 +239,12 @@
         const getAudienceClass = (aud) => ({ 'ttb': 'audience-ttb', 'PD ttb': 'audience-pd', 'PRU': 'audience-pru', 'Customer': 'audience-customer' }[aud] || 'audience-none');
 
         async function handleLogin(e) {
-            e.preventDefault(); showLoading(true);
+            e.preventDefault(); 
+            showLoading(true);
             const inputId = document.getElementById('login-id').value.trim();
             const password = document.getElementById('login-password').value;
             let email = inputId;
+            
             try {
                 if (!inputId.includes('@')) {
                     const { data, error } = await supabaseClient.from('profiles').select('email').eq('user_id_code', inputId).single();
@@ -251,27 +255,51 @@
                 if (error) throw error;
                 await initApp(data.user);
             } catch (err) {
-                document.getElementById('login-error').textContent = err.message === 'Invalid login credentials' ? 'รหัสผ่านไม่ถูกต้อง' : err.message;
-                document.getElementById('login-error').classList.remove('hidden');
-            } finally { showLoading(false); }
+                const errBox = document.getElementById('login-error');
+                errBox.textContent = err.message === 'Invalid login credentials' ? 'รหัสผ่านไม่ถูกต้อง' : err.message;
+                errBox.classList.remove('hidden');
+                showLoading(false);
+            }
         }
 
         async function initApp(user) {
             currentUser = user;
             try {
-                const { data: profile } = await supabaseClient.from('profiles').select('*').eq('id', user.id).single();
-                userProfile = profile;
+                // 1. ดึงข้อมูลผู้ใช้ปัจจุบัน พร้อมระบบป้องกันกรณีไม่มีข้อมูล
+                const { data: profile, error: profErr } = await supabaseClient.from('profiles').select('*').eq('id', user.id).single();
+                if (profErr || !profile) {
+                    console.warn("ไม่พบ Profile ในฐานข้อมูล สร้างค่า Default ชั่วคราวให้");
+                    userProfile = { full_name: user.email.split('@')[0], display_name: 'User', role: 'trainer', team: '' };
+                } else {
+                    userProfile = profile;
+                }
+
+                // 2. ดึงข้อมูลผู้ใช้ทั้งหมด พร้อมระบบป้องกัน String ว่างเปล่า (สาเหตุหลักของอาการเด้ง/จอดำ)
                 const { data: profiles } = await supabaseClient.from('profiles').select('*');
                 if (profiles) {
-                    allProfiles = profiles.filter(p => !p.full_name.includes('อลงกรณ์') && !p.email.includes('korn.ak28') && p.user_id_code !== 'ttb_ap');
+                    allProfiles = profiles.filter(p => {
+                        const fname = p.full_name || '';
+                        const eml = p.email || '';
+                        const uid = p.user_id_code || '';
+                        return !fname.includes('อลงกรณ์') && !eml.includes('korn.ak28') && uid !== 'ttb_ap';
+                    });
                 }
-                document.getElementById('header-name').textContent = formatNameShort(profile);
-                document.getElementById('header-role').textContent = profile.role.toUpperCase();
-                document.getElementById('header-avatar').textContent = getAvatarInitials(profile.full_name);
+
+                // 3. ปรับ UI ให้แสดงชื่อ (ปลอดภัยจาก Error แน่นอน)
+                document.getElementById('header-name').textContent = formatNameShort(userProfile);
+                document.getElementById('header-role').textContent = (userProfile.role || 'trainer').toUpperCase();
+                document.getElementById('header-avatar').textContent = getAvatarInitials(userProfile.full_name);
+                
+                // 4. พาเข้าหน้าหลัก (เปลี่ยนจาก Login Screen -> App Screen)
                 document.getElementById('login-screen').classList.add('hidden');
                 document.getElementById('app').classList.remove('hidden');
+                
                 renderDashboard();
-            } catch (error) { alert('Init Error: ' + error.message); }
+            } catch (error) { 
+                console.error("Critical Init Error:", error);
+                alert('เกิดข้อผิดพลาดในการโหลดข้อมูล: ' + error.message); 
+                showLoading(false);
+            }
         }
 
         async function handleLogout() { if(confirm('ยืนยันออกจากระบบ?')) { await supabaseClient.auth.signOut(); window.location.reload(); } }
@@ -480,7 +508,7 @@
             else if(activeTab === 'line') generateLineReport();
         }
 
-        // Reusing existing functions for main app logic...
+        // Reusing existing functions...
         function renderTaskCard(t,showTrainer=false,clickToPopup=false){const taskStr=buildTaskString(t);const trainerName=t.profiles?t.profiles.display_name:'Unknown';const action=clickToPopup?`openTaskDetailPopup('${t.id}')`:`renderCreateTask('${t.id}')`;return`<div class="task-card bg-white p-4 border border-slate-100 ${getAudienceClass(t.audience)}" onclick="${action}"><div class="flex justify-between items-start"><div class="w-full"><div class="flex justify-between items-center mb-1">${t.is_leave?`<span class="text-xs font-bold text-red-500">🌴 ${t.leave_type}</span>`:''}${showTrainer?`<span class="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full"><i class="fa-solid fa-user mr-1"></i>${trainerName}</span>`:''}</div>${!t.is_leave?`<p class="text-sm font-medium text-slate-800 break-words">${taskStr}</p>`:''}</div>${!t.is_leave?'<i class="fa-solid fa-chevron-right text-slate-300 text-xs ml-2 mt-1"></i>':''}</div></div>`}
         async function openTaskDetailPopup(taskId){showLoading(true);const{data:t}=await supabaseClient.from('tasks').select('*,profiles!tasks_trainer_id_fkey(full_name,display_name)').eq('id',taskId).single();showLoading(false);if(!t)return;const canEdit=(t.trainer_id===currentUser.id)||['admin','master'].includes(userProfile.role);const dateThai=formatDateThai(t.date);const timeStr=(!t.format||t.format==='ไม่ระบุ')?'ไม่ระบุเวลา':`${formatTime(t.start_time)} - ${formatTime(t.end_time)}`;const modalContent=document.getElementById('modal-content');modalContent.innerHTML=`<div class="p-6"><div class="flex justify-between items-start mb-4"><h3 class="text-xl font-bold text-slate-800">รายละเอียดงาน</h3><button onclick="document.getElementById('modal-container').classList.add('hidden')" class="text-slate-400"><i class="fa-solid fa-xmark text-xl"></i></button></div><div class="space-y-4"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">${getAvatarInitials(t.profiles.full_name)}</div><div><p class="text-sm font-bold text-slate-800">${t.profiles.full_name}</p><p class="text-xs text-slate-500">${t.profiles.display_name}</p></div></div><div class="bg-slate-50 p-4 rounded-xl space-y-3 border border-slate-100">${t.is_leave?`<div class="flex items-center gap-3 text-red-500"><i class="fa-solid fa-umbrella-beach w-5"></i><span class="font-bold">${t.leave_type}</span></div>`:`<div class="flex items-start gap-3"><i class="fa-solid fa-book-open w-5 text-slate-400 mt-1"></i><div><p class="text-xs text-slate-400">หลักสูตร</p><p class="font-medium text-slate-800">${t.course_details||'-'}</p></div></div><div class="flex items-start gap-3"><i class="fa-solid fa-clock w-5 text-slate-400 mt-1"></i><div><p class="text-xs text-slate-400">วันและเวลา</p><p class="font-medium text-slate-800">${dateThai}</p><p class="text-sm text-slate-600">${timeStr}</p></div></div><div class="flex items-start gap-3"><i class="fa-solid fa-location-dot w-5 text-slate-400 mt-1"></i><div><p class="text-xs text-slate-400">สถานที่ / รูปแบบ</p><p class="font-medium text-slate-800">${t.location||'-'}</p><span class="text-xs bg-white border border-slate-200 px-2 py-0.5 rounded text-slate-500">${t.format||'ไม่ระบุ'}</span></div></div><div class="flex items-start gap-3"><i class="fa-solid fa-users w-5 text-slate-400 mt-1"></i><div><p class="text-xs text-slate-400">Audience</p><p class="font-medium text-slate-800">${t.audience||'-'}</p></div></div>`}</div></div><div class="mt-6 flex gap-3"><button onclick="showDateDetails('${t.date}')" class="flex-1 py-3 border border-slate-200 rounded-xl text-slate-600 font-bold text-sm">Back</button>${canEdit?`<button onclick="renderCreateTask('${t.id}')" class="flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold text-sm shadow-md">Edit</button><button onclick="deleteTask('${t.id}',true)" class="flex-1 py-3 bg-red-50 text-red-500 rounded-xl font-bold text-sm">Delete</button>`:''}</div></div>`;document.getElementById('modal-container').classList.remove('hidden')}
         async function renderTeamDashboard(){showLoading(true);const now=new Date();const start=new Date(now.getFullYear(),now.getMonth(),1).toISOString().split('T')[0];const end=new Date(now.getFullYear(),now.getMonth()+1,0).toISOString().split('T')[0];try{const{data:tasks}=await supabaseClient.from('tasks').select('*').gte('date',start).lte('date',end);const workload={};tasks.forEach(t=>{workload[t.trainer_id]=(workload[t.trainer_id]||0)+1});const labels=[],data=[];allProfiles.filter(p=>p.role!=='master').forEach(p=>{labels.push(p.display_name);data.push(workload[p.id]||0)});document.getElementById('report-content').innerHTML=`<div class="grid grid-cols-2 gap-3 mb-4"><div class="bg-indigo-50 p-4 rounded-xl text-center"><p class="text-xs text-indigo-500">Total Jobs</p><p class="text-2xl font-bold text-indigo-700">${tasks.length}</p></div><div class="bg-amber-50 p-4 rounded-xl text-center"><p class="text-xs text-amber-500">Total Hours</p><p class="text-2xl font-bold text-amber-700">${tasks.reduce((a,t)=>a+(t.is_leave?0:(parseInt(t.end_time)-parseInt(t.start_time))),0)}</p></div></div><div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm"><canvas id="teamChart"></canvas></div>`;if(teamChart)teamChart.destroy();teamChart=new Chart(document.getElementById('teamChart'),{type:'bar',data:{labels:labels,datasets:[{label:'Jobs',data:data,backgroundColor:'#6366f1',borderRadius:4}]},options:{scales:{y:{beginAtZero:true}}}});}catch(e){alert(e.message)}finally{showLoading(false)}}
@@ -488,22 +516,15 @@
         async function renderDailyResult(day){showLoading(true);try{const d=new Date();if(day==='tomorrow')d.setDate(d.getDate()+1);const dateStr=d.toISOString().split('T')[0];const{data:tasks}=await supabaseClient.from('tasks').select('*,profiles!tasks_trainer_id_fkey(full_name,display_name)').eq('date',dateStr).order('start_time');document.getElementById('daily-result').innerHTML=tasks.length===0?'<p class="text-center text-slate-400">No Tasks</p>':tasks.map(t=>renderTaskCard(t,true,true)).join('')}catch(e){alert(e.message)}finally{showLoading(false)}}
         
         function renderAvailabilitySelector(){
-            // Sub-menu for check type
             document.getElementById('report-content').innerHTML = `
                 <div class="grid grid-cols-1 gap-4">
                     <button onclick="renderAvailabilityCheck()" class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:bg-slate-50 flex items-center gap-3">
                         <div class="bg-blue-100 text-blue-600 w-10 h-10 rounded-full flex items-center justify-center"><i class="fa-solid fa-users-viewfinder"></i></div>
-                        <div class="text-left">
-                            <h3 class="font-bold text-slate-700">หาวันว่าง (Find Time)</h3>
-                            <p class="text-xs text-slate-400">จับกลุ่มเพื่อหาวันที่ว่างพร้อมกัน</p>
-                        </div>
+                        <div class="text-left"><h3 class="font-bold text-slate-700">หาวันว่าง (Find Time)</h3><p class="text-xs text-slate-400">จับกลุ่มเพื่อหาวันที่ว่างพร้อมกัน</p></div>
                     </button>
                     <button onclick="renderCheckWhoIsFree()" class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:bg-slate-50 flex items-center gap-3">
                         <div class="bg-indigo-100 text-indigo-600 w-10 h-10 rounded-full flex items-center justify-center"><i class="fa-solid fa-calendar-check"></i></div>
-                        <div class="text-left">
-                            <h3 class="font-bold text-slate-700">หาคนว่าง (Find People)</h3>
-                            <p class="text-xs text-slate-400">ระบุวันที่ เพื่อดูว่าใครว่างบ้าง</p>
-                        </div>
+                        <div class="text-left"><h3 class="font-bold text-slate-700">หาคนว่าง (Find People)</h3><p class="text-xs text-slate-400">ระบุวันที่ เพื่อดูว่าใครว่างบ้าง</p></div>
                     </button>
                 </div>
                 <div id="check-container" class="mt-4"></div>
