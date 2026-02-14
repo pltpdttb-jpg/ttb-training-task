@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ttb Trainer Task V8.0</title>
+    <title>ttb Trainer Task V8.2</title>
     <!-- Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -11,7 +11,6 @@
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.9/index.global.min.js"></script>
-    <!-- Fonts & Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -67,8 +66,10 @@
     <header id="global-header">ttb training task</header>
 
     <script>
+        // CONFIG
         const SUPABASE_URL = 'https://anxfdwgmookmquuzkupa.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFueGZkd2dtb29rbXF1dXprdXBhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3ODk3NDMsImV4cCI6MjA4NjM2NTc0M30.4H8QVHAoIhpkNvN2eltbI31TwD5Lx2wTILZtZZFzCgQ';
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxp2HhH_PSoxx7C_VKkmZcDXfEuXiO827KbpK96vxgT9R5gYM-MKd2Q62X3yvFWOhlERA/exec';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         
         let currentUser=null, userProfile=null, allProfiles=[], calendarInstance=null, dashboardChart=null, trendChartInstance=null, rawTasks=[];
@@ -80,7 +81,6 @@
         const formatNameShort=(p)=>{if(!p)return"Unknown";const f=p.full_name.split(' ')[0];return`${f} (${p.display_name})`};
         const formatTime=(t)=>t?t.substring(0,5):'00:00';
         const formatDateThai=(d)=>new Date(d).toLocaleDateString('th-TH',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
-        
         const buildTaskString=(task)=>{let p=[];if(task.audience&&task.audience!=='ไม่ระบุ'&&task.audience.trim()!=='')p.push(task.audience+":");const hF=task.format&&task.format!=='ไม่ระบุ'&&task.format.trim()!=='';if(hF)p.push(`(${task.format})`);p.push(task.course_details||'');const hT=task.start_time&&task.start_time!=='00:00:00'&&task.start_time!=='00:00';if(hF&&hT)p.push(`${formatTime(task.start_time)}-${formatTime(task.end_time)}`);if(task.location&&task.location!=='ไม่ระบุ'&&task.location.trim()!=='')p.push(task.location);return p.join(" ")};
         const getAudienceClass=(a)=>({'ttb':'audience-ttb','PD ttb':'audience-pd','PRU':'audience-pru','Customer':'audience-customer'}[a]||'audience-none');
         const showLoading=(s)=>document.getElementById('loading-overlay').classList.toggle('hidden',!s);
@@ -91,7 +91,7 @@
 
     <div id="login-screen" class="min-h-screen flex flex-col justify-center items-center p-8 bg-white absolute inset-0 z-[50]">
         <div class="w-20 h-20 rounded-2xl bg-gradient-primary flex items-center justify-center text-white font-bold text-3xl shadow-xl mb-6">ttb</div>
-        <h2 class="text-xl font-bold text-slate-800 mb-1">Trainer Task V8.0</h2>
+        <h2 class="text-xl font-bold text-slate-800 mb-1">Trainer Task V8.2</h2>
         <form id="login-form" class="w-full max-w-sm space-y-4" onsubmit="handleLogin(event)"><input type="text" id="login-id" required class="input-rounded w-full px-5 py-3.5 bg-slate-50 text-sm" placeholder="User ID/Email"><input type="password" id="login-password" required class="input-rounded w-full px-5 py-3.5 bg-slate-50 text-sm" placeholder="••••••••"><button type="submit" class="w-full bg-gradient-primary text-white font-bold py-4 rounded-xl shadow-lg mt-2">Login</button><div id="login-error" class="text-red-500 text-xs text-center hidden p-2 bg-red-50 rounded-lg"></div></form>
     </div>
 
@@ -224,23 +224,29 @@
         function toggleExportUsers() { document.getElementById('exp-users').classList.toggle('hidden', document.getElementById('exp-target').value !== 'specific'); }
         async function executeExport() { showLoading(true); try { const range = document.getElementById('exp-range').value; let start, end; const now = new Date(); if (range === 'mtd') { start = getLocalDateStr(new Date(now.getFullYear(), now.getMonth(), 1)); end = getLocalDateStr(now); } else if (range === 'ytd') { start = getLocalDateStr(new Date(now.getFullYear(), 0, 1)); end = getLocalDateStr(now); } else { start = document.getElementById('exp-start').value; end = document.getElementById('exp-end').value; if(!start || !end) throw new Error('Invalid Date'); } const target = document.getElementById('exp-target').value; let userIds = []; if (target === 'all') userIds = allProfiles.filter(p=>p.role!=='master').map(p=>p.id); else if (target === 'specialist') userIds = allProfiles.filter(p=>p.team==='Training Specialist').map(p=>p.id); else if (target === 'mandatory') userIds = allProfiles.filter(p=>p.team==='Mandatory').map(p=>p.id); else { userIds = Array.from(document.querySelectorAll('.exp-user-cb:checked')).map(cb=>cb.value); if(userIds.length===0) throw new Error('Select at least 1 person'); } const { data: tasks, error } = await supabaseClient.from('tasks').select('*, profiles!tasks_trainer_id_fkey(full_name, team, role)').in('trainer_id', userIds).gte('date', start).lte('date', end); if (error) throw error; if (!tasks.length) throw new Error('No Data Found'); const exportData = tasks.map(t => ({ Date: t.date, Start: t.start_time, End: t.end_time, Trainer: t.profiles?.full_name||'Unknown', Team: t.profiles?.team||'', Course: t.course_details, Format: t.format, Audience: t.audience, Location: t.location, IsLeave: t.is_leave?'Yes':'No', LeaveType: t.leave_type })); const ws = XLSX.utils.json_to_sheet(exportData); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Tasks"); XLSX.writeFile(wb, `Trainer_Export_${getLocalDateStr(now)}.xlsx`); document.getElementById('modal-container').classList.add('hidden'); } catch (e) { alert(e.message); } finally { showLoading(false); } }
 
-        // --- 4. CREATE / EDIT TASK ---
+        // --- 4. CREATE / EDIT TASK (UPDATED) ---
         async function renderCreateTask(taskId = null, datePrefill = null, trainerPrefill = null) {
             setActiveNav(''); showLoading(true);
             let task = null;
             if(taskId) { const { data } = await supabaseClient.from('tasks').select('*').eq('id', taskId).single(); task = data; }
 
             let trainerInputHTML = '';
+            // New V8 Logic: If Admin/Master
             if (['admin', 'master'].includes(userProfile.role)) {
+                // If prefill exists (from timeline), select that person. Else select task owner or none.
                 const selectedTrainer = task ? task.trainer_id : trainerPrefill;
                 trainerInputHTML = `<div class="mb-4"><label class="text-xs font-bold text-slate-500 ml-1">ผู้สอน</label><select id="task-trainer" multiple class="input-rounded w-full px-4 py-3 bg-white text-sm h-32">${allProfiles.sort((a,b)=>a.full_name.localeCompare(b.full_name)).map(p=>`<option value="${p.id}" ${p.id===selectedTrainer?'selected':''}>${formatNameShort(p)}</option>`).join('')}</select></div>`;
-            } else { trainerInputHTML = `<input type="hidden" id="task-trainer" value="${currentUser.id}">`; }
+            } else { 
+                // Trainer always locked to self
+                trainerInputHTML = `<input type="hidden" id="task-trainer" value="${currentUser.id}">`; 
+            }
 
             const html = `
                 <div class="max-w-md mx-auto">
                     <div class="flex justify-between items-center mb-6"><h2 class="text-xl font-bold text-slate-800">${taskId ? 'แก้ไขงาน' : 'สร้างงานใหม่'}</h2><button onclick="renderDashboard()" class="text-slate-400"><i class="fa-solid fa-xmark"></i></button></div>
                     <form onsubmit="handleSaveTask(event, '${taskId || ''}')" class="space-y-4">
                         ${trainerInputHTML}
+                        <div class="flex items-center gap-2 mb-4 p-3 bg-blue-50 rounded-xl border border-blue-100"><input type="checkbox" id="sync-google" checked class="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"><label for="sync-google" class="text-sm font-medium text-blue-800">บันทึกลง Google Calendar ด้วย</label></div>
                         <div class="flex items-center gap-3 mb-2 bg-slate-50 p-3 rounded-xl"><input type="checkbox" id="is-leave" onchange="toggleLeaveMode()" ${task?.is_leave ? 'checked' : ''} class="w-5 h-5"><label for="is-leave" class="text-sm font-medium text-slate-700">บันทึกเป็นวันลา / วันหยุด</label></div>
                         <div id="leave-fields" class="${task?.is_leave ? '' : 'hidden'}"><label class="text-xs font-bold text-slate-500 ml-1">ประเภทวันลา</label><select id="leave-type" class="input-rounded w-full px-4 py-3 bg-white text-sm"><option value="Annual leave">Annual Leave</option><option value="Sick leave">Sick Leave</option><option value="Business leave">Business Leave</option></select></div>
                         <div id="work-fields" class="${task?.is_leave ? 'hidden' : ''} space-y-4">
@@ -297,13 +303,20 @@
                         for(const t of existing) {
                             if(t.is_leave) { conflictType = 'soft'; conflictTask = t; break; }
                             if(isLeave) { conflictType = 'soft'; conflictTask = t; break; }
+
                             const hasTimeNew = newFormat !== '' && newStart && newStart !== '00:00';
                             const hasTimeOld = t.format && t.start_time !== '00:00:00' && t.start_time !== '00:00';
-                            if(hasTimeNew && hasTimeOld) { if(newStart < t.end_time && newEnd > t.start_time) { conflictType = 'hard'; conflictTask = t; break; } }
+
+                            if(hasTimeNew && hasTimeOld) {
+                                if(newStart < t.end_time && newEnd > t.start_time) { conflictType = 'hard'; conflictTask = t; break; }
+                            }
                             if(conflictType !== 'hard') { conflictType = 'soft'; conflictTask = t; }
                         }
+
                         if(conflictType === 'hard') { alert(`ไม่สามารถบันทึกได้: เวลาชนกับงาน "${conflictTask.course_details}"`); showLoading(false); return; }
-                        if(conflictType === 'soft') { if(!confirm(`มีงาน "${conflictTask.is_leave ? conflictTask.leave_type : conflictTask.course_details}" อยู่ในวันนี้แล้ว ยืนยันที่จะบันทึกเพิ่มหรือไม่?`)) { showLoading(false); return; } }
+                        if(conflictType === 'soft') {
+                            if(!confirm(`มีงาน "${conflictTask.is_leave ? conflictTask.leave_type : conflictTask.course_details}" อยู่ในวันนี้แล้ว ยืนยันที่จะบันทึกเพิ่มหรือไม่?`)) { showLoading(false); return; }
+                        }
                     }
                 }
             }
@@ -323,6 +336,33 @@
             try {
                 if(taskId) await supabaseClient.from('tasks').update(payload).eq('id', taskId);
                 else await supabaseClient.from('tasks').insert(trainers.map(id => ({...payload, trainer_id: id})));
+
+                // *** GOOGLE SYNC V8.2 ***
+                const syncGoogle = document.getElementById('sync-google').checked;
+                if(syncGoogle) {
+                    for (const tid of trainers) {
+                       const trainerProfile = allProfiles.find(p => p.id === tid);
+                       if (trainerProfile && trainerProfile.calendar_id) {
+                           const syncPayload = {
+                               calendarId: trainerProfile.calendar_id,
+                               date: payload.date,
+                               startTime: payload.start_time,
+                               endTime: payload.end_time,
+                               courseDetails: payload.is_leave ? payload.leave_type : payload.course_details,
+                               format: payload.format || '',
+                               audience: payload.audience || '',
+                               location: payload.location || ''
+                           };
+                           fetch(GOOGLE_SCRIPT_URL, {
+                               method: 'POST',
+                               mode: 'no-cors', 
+                               headers: { 'Content-Type': 'application/json' },
+                               body: JSON.stringify(syncPayload)
+                           }).catch(err => console.error("Google Sync Error:", err));
+                       }
+                    }
+                }
+
                 alert('บันทึกสำเร็จ'); renderDashboard();
             } catch(e) { alert(e.message); } finally { showLoading(false); }
         }
