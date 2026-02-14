@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ttb Trainer Task V7.3</title>
+    <title>ttb Trainer Task V8.0</title>
     <!-- Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -11,50 +11,41 @@
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.9/index.global.min.js"></script>
-    <!-- Fonts & Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
-        body { background-color: #f8fafc; font-family: 'Prompt', sans-serif; -webkit-tap-highlight-color: transparent; padding-top: 40px; padding-bottom: 60px; }
+        body { background-color: #f8fafc; font-family: 'Prompt', sans-serif; -webkit-tap-highlight-color: transparent; padding-top: 40px; padding-bottom: 70px; }
         .bg-gradient-primary { background: linear-gradient(135deg, #002d63 0%, #0056b3 100%); }
         .input-rounded { border-radius: 12px; border: 1px solid #e2e8f0; transition: all 0.2s; appearance: none; }
         .input-rounded:focus { border-color: #0056b3; box-shadow: 0 0 0 3px rgba(0, 86, 179, 0.1); outline: none; }
         .loader { border: 3px solid #f3f3f3; border-radius: 50%; border-top: 3px solid #002d63; width: 32px; height: 32px; animation: spin 1s linear infinite; }
         
-        /* Calendar Specifics */
+        /* Calendar & Grid */
         .fc { font-size: 0.8em; }
         .fc-toolbar-title { font-size: 1.1em !important; font-weight: 600; color: #1e293b; }
         .fc-daygrid-day-frame { min-height: 80px !important; cursor: pointer; transition: background 0.2s; position: relative; }
         .fc-daygrid-day-frame:active { background-color: #f1f5f9; }
-        .fc-day-today { background-color: #f0f9ff !important; }
-        .fc-event { background: none !important; border: none !important; box-shadow: none !important; margin: 0 !important; }
-        
-        /* Avatar Grid */
+        .fc-event { background: none !important; border: none !important; margin: 0 !important; }
         .avatar-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; width: 100%; padding-top: 2px; }
         .avatar-icon { width: 22px; height: 22px; border-radius: 50%; font-size: 8px; font-weight: bold; display: flex; align-items: center; justify-content: center; color: white; border: 1px solid white; margin: 0 auto; box-shadow: 0 1px 2px rgba(0,0,0,0.1); object-fit: cover; background-color: #cbd5e1; }
-        
-        /* Timeline Dashboard Styles */
-        .timeline-container { display: grid; grid-template-columns: 120px 1fr; gap: 0; background: white; border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0; }
+
+        /* Timeline Styles */
+        .timeline-container { display: grid; grid-template-columns: 100px 1fr; gap: 0; background: white; border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0; }
         .timeline-names { background: #f8fafc; border-right: 1px solid #e2e8f0; z-index: 10; }
-        .timeline-row { height: 50px; display: flex; align-items: center; padding-left: 10px; border-bottom: 1px solid #f1f5f9; }
-        .timeline-header-row { height: 30px; display: flex; align-items: center; padding-left: 10px; border-bottom: 1px solid #e2e8f0; background: #f1f5f9; font-size: 10px; font-weight: bold; color: #64748b; } /* NEW: Header Spacer */
+        .timeline-row { height: 40px; display: flex; align-items: center; padding-left: 8px; border-bottom: 1px solid #f1f5f9; }
+        .timeline-header-row { height: 30px; display: flex; align-items: center; padding-left: 8px; border-bottom: 1px solid #e2e8f0; background: #f1f5f9; font-size: 10px; font-weight: bold; color: #64748b; }
         .timeline-bars-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-        .timeline-bars-row { height: 50px; display: flex; align-items: center; border-bottom: 1px solid #f1f5f9; padding: 0 5px; min-width: max-content; }
-        .timeline-bars-header { height: 30px; display: flex; align-items: center; border-bottom: 1px solid #e2e8f0; padding: 0 5px; min-width: max-content; background: #f8fafc; }
-        .timeline-day-col { width: 24px; text-align: center; margin-right: 2px; flex-shrink: 0; position: relative; }
-        .bar-cell { width: 100%; height: 36px; border-radius: 6px; cursor: pointer; transition: transform 0.1s; }
-        .bar-cell:active { transform: scale(0.95); }
+        .timeline-bars-row { height: 40px; display: flex; align-items: center; border-bottom: 1px solid #f1f5f9; padding: 0; min-width: max-content; }
+        .timeline-bars-header { height: 30px; display: flex; align-items: center; border-bottom: 1px solid #e2e8f0; padding: 0; min-width: max-content; background: #f8fafc; }
+        .timeline-day-col { width: 26px; text-align: center; border-right: 1px dashed #f1f5f9; flex-shrink: 0; position: relative; height: 100%; display: flex; align-items: center; justify-content: center; }
+        .bar-cell { width: 22px; height: 30px; border-radius: 4px; cursor: pointer; transition: transform 0.1s; }
+        .bar-cell:active { transform: scale(0.9); }
         .bar-green { background-color: #bbf7d0; } 
         .bar-orange { background-color: #fb923c; } 
         .bar-gray { background-color: #e2e8f0; }
-        
-        /* Tooltip */
-        .custom-tooltip { position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 6px 10px; border-radius: 6px; font-size: 10px; white-space: nowrap; z-index: 50; display: none; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 5px; }
-        .custom-tooltip::after { content: ''; position: absolute; top: 100%; left: 50%; margin-left: -4px; border-width: 4px; border-style: solid; border-color: #1e293b transparent transparent transparent; }
-        .bar-cell:hover .custom-tooltip { display: block; }
-        .bar-cell.active-tooltip .custom-tooltip { display: block; }
 
+        /* UI Elements */
         .task-card { transition: all 0.2s; border-left-width: 4px; border-radius: 0.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); background: white; }
         .audience-ttb { border-left-color: #3b82f6; }
         .audience-pd { border-left-color: #10b981; }
@@ -62,12 +53,11 @@
         .audience-customer { border-left-color: #f59e0b; }
         .audience-other { border-left-color: #6b7280; }
         .audience-none { border-left-color: #cbd5e1; }
-
+        
         .hidden { display: none !important; }
         .tab-active { color: #2563eb; border-bottom: 2px solid #2563eb; background-color: #eff6ff; }
         .tab-inactive { color: #64748b; border-bottom: 2px solid transparent; }
         
-        /* Headers */
         #global-header { position: fixed; top: 0; left: 0; width: 100%; height: 40px; background: #002d63; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; z-index: 100; letter-spacing: 1px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
         #global-footer { position: fixed; bottom: 0; left: 0; width: 100%; height: 30px; background: #f1f5f9; color: #64748b; display: flex; align-items: center; justify-content: center; font-size: 10px; z-index: 100; border-top: 1px solid #e2e8f0; font-weight: 500; }
     </style>
@@ -76,11 +66,11 @@
     <header id="global-header">ttb training task</header>
 
     <script>
-        const SUPABASE_URL = 'YOUR_SUPABASE_URL';
-        const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_KEY';
+        const SUPABASE_URL = 'https://anxfdwgmookmquuzkupa.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFueGZkd2dtb29rbXF1dXprdXBhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3ODk3NDMsImV4cCI6MjA4NjM2NTc0M30.4H8QVHAoIhpkNvN2eltbI31TwD5Lx2wTILZtZZFzCgQ';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         
-        let currentUser=null, userProfile=null, allProfiles=[], calendarInstance=null, dashboardChart=null, teamChart=null;
+        let currentUser=null, userProfile=null, allProfiles=[], calendarInstance=null, dashboardChart=null, trendChartInstance=null, rawTasks=[];
 
         // Helpers
         const getLocalDateStr=(d=new Date())=>{const y=d.getFullYear();const m=String(d.getMonth()+1).padStart(2,'0');const day=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${day}`};
@@ -90,18 +80,15 @@
         const formatTime=(t)=>t?t.substring(0,5):'00:00';
         const formatDateThai=(d)=>new Date(d).toLocaleDateString('th-TH',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
         
-        // Smart String Builder (For Card & Popup)
         const buildTaskString=(task)=>{let p=[];if(task.audience&&task.audience!=='ไม่ระบุ'&&task.audience.trim()!=='')p.push(task.audience+":");const hF=task.format&&task.format!=='ไม่ระบุ'&&task.format.trim()!=='';if(hF)p.push(`(${task.format})`);p.push(task.course_details||'');const hT=task.start_time&&task.start_time!=='00:00:00'&&task.start_time!=='00:00';if(hF&&hT)p.push(`${formatTime(task.start_time)}-${formatTime(task.end_time)}`);if(task.location&&task.location!=='ไม่ระบุ'&&task.location.trim()!=='')p.push(task.location);return p.join(" ")};
         const getAudienceClass=(a)=>({'ttb':'audience-ttb','PD ttb':'audience-pd','PRU':'audience-pru','Customer':'audience-customer'}[a]||'audience-none');
         const showLoading=(s)=>document.getElementById('loading-overlay').classList.toggle('hidden',!s);
         const setActiveNav=(id)=>{document.querySelectorAll('.nav-btn').forEach(b=>{b.classList.remove('text-blue-600');b.classList.add('text-slate-400')});const btn=document.getElementById(id);if(btn){btn.classList.add('text-blue-600');btn.classList.remove('text-slate-400')}};
-        function toggleTooltip(el){document.querySelectorAll('.bar-cell').forEach(c=>{if(c!==el)c.classList.remove('active-tooltip')});el.classList.toggle('active-tooltip')}
-        document.addEventListener('click',e=>{if(!e.target.closest('.bar-cell'))document.querySelectorAll('.bar-cell').forEach(c=>c.classList.remove('active-tooltip'))});
     </script>
 
     <div id="login-screen" class="min-h-screen flex flex-col justify-center items-center p-8 bg-white absolute inset-0 z-[50]">
         <div class="w-20 h-20 rounded-2xl bg-gradient-primary flex items-center justify-center text-white font-bold text-3xl shadow-xl mb-6">ttb</div>
-        <h2 class="text-xl font-bold text-slate-800 mb-1">Trainer Task V7.3</h2>
+        <h2 class="text-xl font-bold text-slate-800 mb-1">Trainer Task V8.0</h2>
         <form id="login-form" class="w-full max-w-sm space-y-4" onsubmit="handleLogin(event)"><input type="text" id="login-id" required class="input-rounded w-full px-5 py-3.5 bg-slate-50 text-sm" placeholder="User ID/Email"><input type="password" id="login-password" required class="input-rounded w-full px-5 py-3.5 bg-slate-50 text-sm" placeholder="••••••••"><button type="submit" class="w-full bg-gradient-primary text-white font-bold py-4 rounded-xl shadow-lg mt-2">Login</button><div id="login-error" class="text-red-500 text-xs text-center hidden p-2 bg-red-50 rounded-lg"></div></form>
     </div>
 
@@ -128,10 +115,10 @@
         async function initApp(u){currentUser=u;try{const{data:p}=await supabaseClient.from('profiles').select('*').eq('id',u.id).single();userProfile=p;const{data:all}=await supabaseClient.from('profiles').select('*');if(all){allProfiles=all.filter(x=>!x.full_name.includes('อลงกรณ์')&&x.user_id_code!=='ttb_ap')}document.getElementById('header-name').textContent=formatNameShort(userProfile);document.getElementById('header-role').textContent=userProfile.role.toUpperCase();document.getElementById('header-avatar-container').innerHTML=renderAvatar(userProfile,'w-full h-full object-cover');document.getElementById('login-screen').classList.add('hidden');document.getElementById('app').classList.remove('hidden');renderDashboard()}catch(e){alert(e.message);showLoading(false)}}
         async function handleLogout(){if(confirm('Logout?')){await supabaseClient.auth.signOut();window.location.reload()}}
 
-        // DASHBOARD
+        // --- DASHBOARD ---
         async function renderDashboard(){showLoading(true);setActiveNav('nav-home');try{const n=new Date();const s=getLocalDateStr(new Date(n.getFullYear(),n.getMonth(),1));const e=getLocalDateStr(new Date(n.getFullYear(),n.getMonth()+1,0));const t=getLocalDateStr(n);const tm=new Date(n);tm.setDate(tm.getDate()+1);const tms=getLocalDateStr(tm);const{data:mt}=await supabaseClient.from('tasks').select('*,profiles!tasks_trainer_id_fkey(full_name,display_name,avatar_url)').eq('trainer_id',currentUser.id).gte('date',s).lte('date',e);const{data:ut}=await supabaseClient.from('tasks').select('*,profiles!tasks_trainer_id_fkey(full_name,display_name,avatar_url)').eq('trainer_id',currentUser.id).in('date',[t,tms]).order('date').order('start_time');const th=mt.reduce((a,x)=>x.is_leave||!x.format||x.format==='ไม่ระบุ'?a:a+(parseInt(x.end_time)-parseInt(x.start_time)),0);const wk=[0,0,0,0,0];mt.forEach(x=>{const d=new Date(x.date);const w=Math.floor((d.getDate()-1)/7);if(wk[w]!==undefined)wk[w]++});document.getElementById('main-content').innerHTML=`<div class="space-y-6"><div class="flex justify-between items-start"><div><h2 class="text-xl font-bold text-slate-800">แดชบอร์ดส่วนตัว</h2><p class="text-xs text-slate-500">เดือน ${n.toLocaleDateString('th-TH',{month:'long'})}</p></div><button onclick="renderDashboard()" class="text-blue-500 p-2"><i class="fa-solid fa-rotate-right"></i></button></div><div class="grid grid-cols-2 gap-3"><div class="bg-gradient-primary rounded-2xl p-4 text-white shadow-lg"><p class="text-xs opacity-80">งานทั้งหมด</p><p class="text-3xl font-bold mt-1">${mt.length}</p><p class="text-[10px] mt-2 opacity-80">${th} ชม.</p></div><div class="space-y-3"><div class="bg-white p-3 rounded-2xl border shadow-sm flex justify-between"><div><p class="text-[10px] text-slate-400">Online</p><p class="text-xl font-bold text-emerald-600">${mt.filter(x=>x.format==='Online').length}</p></div><div class="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600"><i class="fa-solid fa-video"></i></div></div><div class="bg-white p-3 rounded-2xl border shadow-sm flex justify-between"><div><p class="text-[10px] text-slate-400">F2F</p><p class="text-xl font-bold text-blue-600">${mt.filter(x=>x.format==='F2F').length}</p></div><div class="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600"><i class="fa-solid fa-users"></i></div></div></div></div><div class="bg-white p-4 rounded-xl border shadow-sm"><canvas id="wc"></canvas></div><div class="space-y-4"><div><h3 class="font-bold text-slate-700 mb-2">วันนี้</h3><div class="space-y-2">${ut.filter(x=>x.date===t).length===0?'<p class="text-xs text-slate-400">ไม่มีงาน</p>':ut.filter(x=>x.date===t).map(x=>renderTaskCard(x)).join('')}</div></div><div><h3 class="font-bold text-slate-700 mb-2">พรุ่งนี้</h3><div class="space-y-2">${ut.filter(x=>x.date===tms).length===0?'<p class="text-xs text-slate-400">ไม่มีงาน</p>':ut.filter(x=>x.date===tms).map(x=>renderTaskCard(x)).join('')}</div></div></div></div>`;if(dashboardChart)dashboardChart.destroy();dashboardChart=new Chart(document.getElementById('wc'),{type:'bar',data:{labels:['W1','W2','W3','W4','W5'],datasets:[{label:'Jobs',data:wk,backgroundColor:'#3b82f6',borderRadius:4}]},options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true},x:{grid:{display:false}}}}});}catch(e){console.error(e)}finally{showLoading(false)}}
 
-        // CALENDAR
+        // --- CALENDAR ---
         async function renderCalendar(){showLoading(true);setActiveNav('nav-calendar');document.getElementById('main-content').innerHTML=`<div class="flex justify-between items-center mb-2 px-2"><h2 class="text-lg font-bold">ปฏิทินงาน</h2><button onclick="renderCalendar()" class="text-blue-500 p-2"><i class="fa-solid fa-rotate-right"></i></button></div><div class="h-[calc(100vh-220px)] bg-white rounded-xl shadow-sm p-2"><div id="full-calendar"></div></div>`;const cel=document.getElementById('full-calendar');calendarInstance=new FullCalendar.Calendar(cel,{initialView:'dayGridMonth',locale:'th',height:'100%',headerToolbar:{left:'prev',center:'title',right:'next'},events:async(i,s,f)=>{try{const{data,error}=await supabaseClient.from('tasks').select('*,profiles!tasks_trainer_id_fkey(full_name,display_name,avatar_url)').gte('date',i.startStr).lte('date',i.endStr);if(error)throw error;const tbd={};data.forEach(t=>{if(!tbd[t.date])tbd[t.date]=[];tbd[t.date].push(t)});s(Object.keys(tbd).map(d=>({start:d,allDay:true,display:'background',extendedProps:{tasks:tbd[d]}})))}catch(e){f(e)}},eventContent:a=>{let h='<div class="avatar-grid">';a.event.extendedProps.tasks.forEach(t=>{h+=`<div>${renderAvatar(t.profiles,'avatar-icon')}</div>`});h+='</div>';return{html:h}},dateClick:async(i)=>{await showDateDetails(i.dateStr)}});calendarInstance.render();showLoading(false)}
         async function showDateDetails(dStr){showLoading(true);const dThai=formatDateThai(dStr);const{data:t}=await supabaseClient.from('tasks').select('*,profiles!tasks_trainer_id_fkey(full_name,display_name,avatar_url)').eq('date',dStr);showLoading(false);let dt=[];if(['admin','master'].includes(userProfile.role))dt=t.sort((a,b)=>(a.trainer_id===currentUser.id?-1:1));else dt=t.filter(x=>x.trainer_id===currentUser.id);const c=document.getElementById('modal-content');c.innerHTML=`<div class="p-5 flex flex-col h-full"><div class="flex justify-between items-center mb-4"><h3 class="font-bold text-lg">${dThai}</h3><button onclick="document.getElementById('modal-container').classList.add('hidden')" class="text-slate-400"><i class="fa-solid fa-xmark"></i></button></div><div class="flex-1 overflow-y-auto space-y-3 mb-4">${dt.length===0?'<p class="text-center text-slate-400">ไม่มีงาน</p>':dt.map(x=>renderTaskCard(x,true,true)).join('')}</div><button onclick="renderCreateTask(null,'${dStr}');document.getElementById('modal-container').classList.add('hidden')" class="w-full py-3 bg-blue-600 text-white rounded-xl font-bold shadow-md">เพิ่มงานวันนี้</button></div>`;document.getElementById('modal-container').classList.remove('hidden')}
         
@@ -139,102 +126,85 @@
 
         async function openTaskDetailPopup(id){showLoading(true);const{data:t}=await supabaseClient.from('tasks').select('*,profiles!tasks_trainer_id_fkey(full_name,display_name,avatar_url)').eq('id',id).single();showLoading(false);if(!t)return;const ce=(t.trainer_id===currentUser.id)||['admin','master'].includes(userProfile.role);const dThai=formatDateThai(t.date);const tmStr=(!t.format||t.format==='ไม่ระบุ')?'ไม่ระบุเวลา':`${formatTime(t.start_time)} - ${formatTime(t.end_time)}`;document.getElementById('modal-content').innerHTML=`<div class="p-6"><div class="flex justify-between items-start mb-4"><h3 class="text-xl font-bold text-slate-800">รายละเอียด</h3><button onclick="document.getElementById('modal-container').classList.add('hidden')" class="text-slate-400"><i class="fa-solid fa-xmark text-xl"></i></button></div><div class="space-y-4"><div class="flex items-center gap-3"><div class="w-12 h-12 rounded-full overflow-hidden border-2 border-blue-100">${renderAvatar(t.profiles,'w-full h-full object-cover')}</div><div><p class="text-sm font-bold text-slate-800">${t.profiles.full_name}</p><p class="text-xs text-slate-500">${t.profiles.display_name}</p></div></div><div class="bg-slate-50 p-4 rounded-xl space-y-3 border border-slate-100">${t.is_leave?`<div class="flex items-center gap-3 text-red-500"><i class="fa-solid fa-umbrella-beach w-5"></i><span class="font-bold">${t.leave_type}</span></div>`:`<div class="flex items-start gap-3"><i class="fa-solid fa-book-open w-5 text-slate-400 mt-1"></i><div><p class="text-xs text-slate-400">หลักสูตร</p><p class="font-medium text-slate-800">${t.course_details||'-'}</p></div></div><div class="flex items-start gap-3"><i class="fa-solid fa-clock w-5 text-slate-400 mt-1"></i><div><p class="text-xs text-slate-400">วันเวลา</p><p class="font-medium text-slate-800">${dThai}</p><p class="text-sm text-slate-600">${tmStr}</p></div></div><div class="flex items-start gap-3"><i class="fa-solid fa-location-dot w-5 text-slate-400 mt-1"></i><div><p class="text-xs text-slate-400">สถานที่/รูปแบบ</p><p class="font-medium text-slate-800">${t.location||'-'}</p><span class="text-xs bg-white border border-slate-200 px-2 py-0.5 rounded text-slate-500">${t.format||'ไม่ระบุ'}</span></div></div>`}</div></div><div class="mt-6 flex gap-3"><button onclick="showDateDetails('${t.date}')" class="flex-1 py-3 border border-slate-200 rounded-xl font-bold text-sm">Back</button>${ce?`<button onclick="renderCreateTask('${t.id}')" class="flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold text-sm">Edit</button><button onclick="deleteTask('${t.id}',true)" class="flex-1 py-3 bg-red-50 text-red-500 rounded-xl font-bold text-sm">Delete</button>`:''}</div></div>`;document.getElementById('modal-container').classList.remove('hidden')}
 
-        // REPORTS
-        function renderReportsHub(tab='dashboard'){setActiveNav('nav-reports');const admin=['admin','master'].includes(userProfile.role);document.getElementById('main-content').innerHTML=`<div class="space-y-4"><div class="flex bg-white rounded-xl p-1 shadow-sm border border-slate-100 mb-4 overflow-x-auto"><button onclick="renderReportsHub('dashboard')" class="flex-1 py-2 px-3 text-xs font-bold rounded-lg whitespace-nowrap ${tab==='dashboard'?'tab-active':'tab-inactive'}">📊 ภาพรวม</button><button onclick="renderReportsHub('daily')" class="flex-1 py-2 px-3 text-xs font-bold rounded-lg whitespace-nowrap ${tab==='daily'?'tab-active':'tab-inactive'}">📅 รายวัน</button><button onclick="renderReportsHub('check')" class="flex-1 py-2 px-3 text-xs font-bold rounded-lg whitespace-nowrap ${tab==='check'?'tab-active':'tab-inactive'}">🔍 เช็คว่าง</button><button onclick="renderReportsHub('line')" class="flex-1 py-2 px-3 text-xs font-bold rounded-lg whitespace-nowrap ${tab==='line'?'tab-active':'tab-inactive'}">💬 Line</button></div><div id="report-content"></div>${admin?`<button onclick="renderExportModal()" class="w-full bg-slate-800 text-white p-3 rounded-xl shadow-md mt-4 flex items-center justify-center gap-2"><i class="fa-solid fa-file-excel"></i> Export Data</button>`:''}</div>`;if(tab==='dashboard')renderTeamDashboard();else if(tab==='daily')renderDailyReportSelector();else if(tab==='check')renderAvailabilitySelector();else if(tab==='line')generateLineReport()}
+        // --- REPORTS HUB ---
+        function renderReportsHub(tab='timeline'){setActiveNav('nav-reports');const admin=['admin','master'].includes(userProfile.role);document.getElementById('main-content').innerHTML=`<div class="space-y-4"><div class="flex bg-white rounded-xl p-1 shadow-sm border border-slate-100 mb-4 overflow-x-auto"><button onclick="renderReportsHub('timeline')" class="flex-1 py-2 px-3 text-xs font-bold rounded-lg whitespace-nowrap ${tab==='timeline'?'tab-active':'tab-inactive'}">📊 ภาพรวมทีม</button><button onclick="renderReportsHub('analytics')" class="flex-1 py-2 px-3 text-xs font-bold rounded-lg whitespace-nowrap ${tab==='analytics'?'tab-active':'tab-inactive'}">📈 Analytics</button><button onclick="renderReportsHub('daily')" class="flex-1 py-2 px-3 text-xs font-bold rounded-lg whitespace-nowrap ${tab==='daily'?'tab-active':'tab-inactive'}">📅 รายงานรายวัน</button><button onclick="renderReportsHub('check')" class="flex-1 py-2 px-3 text-xs font-bold rounded-lg whitespace-nowrap ${tab==='check'?'tab-active':'tab-inactive'}">🔍 เช็คว่าง</button><button onclick="renderReportsHub('line')" class="flex-1 py-2 px-3 text-xs font-bold rounded-lg whitespace-nowrap ${tab==='line'?'tab-active':'tab-inactive'}">💬 Line</button></div><div id="report-content"></div>${admin?`<button onclick="renderExportModal()" class="w-full bg-slate-800 text-white p-3 rounded-xl shadow-md mt-4 flex items-center justify-center gap-2"><i class="fa-solid fa-file-excel"></i> Export Data</button>`:''}</div>`;if(tab==='timeline')renderTeamTimeline();else if(tab==='analytics')renderAnalytics();else if(tab==='daily')renderDailyReportSelector();else if(tab==='check')renderAvailabilitySelector();else if(tab==='line')generateLineReport()}
 
-        // --- TIMELINE DASHBOARD (Fixed Alignment) ---
-        async function renderTeamDashboard(){
+        // --- 1. Team Timeline (Improved) ---
+        async function renderTeamTimeline(){
             showLoading(true);
             const now=new Date();const start=getLocalDateStr(new Date(now.getFullYear(),now.getMonth(),1));const end=getLocalDateStr(new Date(now.getFullYear(),now.getMonth()+1,0));
             const dim=new Date(now.getFullYear(),now.getMonth()+1,0).getDate();
-            
             try{
                 const{data:tasks}=await supabaseClient.from('tasks').select('*').gte('date',start).lte('date',end);
-                
-                // Sort Order Logic
                 const order1=['Thanayot','Yannapat','Natkanit','Pachara','Saowanee','Wattanapan','Arthaphan'];
                 const order2=['Ananya','Nantida','Supaporn','Patchareeya','Suksawad'];
                 const rank=(n,o)=>{const i=o.findIndex(k=>n.includes(k));return i===-1?99:i};
+                const sortedProfiles=allProfiles.filter(p=>p.role!=='master').sort((a,b)=>{if(a.team!==b.team)return a.team==='Training Specialist'?-1:1;const arr=a.team==='Training Specialist'?order1:order2;return rank(a.full_name,arr)-rank(b.full_name,arr)});
                 
-                const sortedProfiles=allProfiles.filter(p=>p.role!=='master').sort((a,b)=>{
-                    if(a.team!==b.team) return a.team==='Training Specialist'?-1:1;
-                    const arr = a.team==='Training Specialist'?order1:order2;
-                    return rank(a.full_name,arr) - rank(b.full_name,arr);
-                });
-
-                let h=`<div class="timeline-container"><div class="timeline-names"><div class="timeline-header-row">Trainer</div>`; // Added Header Cell
+                let h=`<div class="timeline-container"><div class="timeline-names"><div class="timeline-header-row">Trainer</div>`;
                 sortedProfiles.forEach(p=>{h+=`<div class="timeline-row"><div class="flex items-center gap-2"><div class="w-6 h-6 rounded-full overflow-hidden">${renderAvatar(p,'w-full h-full object-cover')}</div><div class="text-[10px] font-bold truncate w-20">${p.display_name}</div></div></div>`});
-                h+=`</div><div class="timeline-bars-scroll"><div class="timeline-bars-header">`; // Use Header Row
+                h+=`</div><div class="timeline-bars-scroll"><div class="timeline-bars-header">`;
                 for(let i=1;i<=dim;i++){h+=`<div class="timeline-day-col"><span class="text-[9px] text-slate-400">${i}</span></div>`}
                 h+=`</div>`;
                 sortedProfiles.forEach(p=>{
                     h+=`<div class="timeline-bars-row">`;
                     for(let i=1;i<=dim;i++){
                         const d=new Date(now.getFullYear(),now.getMonth(),i);const ds=getLocalDateStr(d);const w=d.getDay()===0||d.getDay()===6;const t=tasks.find(x=>x.trainer_id===p.id&&x.date===ds);
-                        let cls='bar-green',clk='',tt='';
-                        if(t){cls='bar-orange';tt=`<div class="custom-tooltip">${t.is_leave?t.leave_type:t.course_details}</div>`;clk=`onclick="toggleTooltip(this)"`}else if(w){cls='bar-gray'}
+                        let cls='bar-green',clk=`onclick="confirmAddTask('${p.id}','${ds}','${p.display_name}')"`,tt='';
+                        if(t){cls='bar-orange';tt=`<div class="custom-tooltip">${t.is_leave?t.leave_type:t.course_details}</div>`;clk=`onclick="openTaskDetailPopup('${t.id}')"`}else if(w){cls='bar-gray'}
                         h+=`<div class="timeline-day-col"><div class="bar-cell ${cls}" ${clk}>${tt}</div></div>`;
                     }
                     h+=`</div>`;
                 });
                 h+=`</div></div>`;
-                document.getElementById('report-content').innerHTML=`<div class="mb-4"><h3 class="font-bold text-slate-700 mb-2">ตารางงานเดือน ${now.toLocaleDateString('th-TH',{month:'long'})}</h3>${h}<div class="flex gap-4 mt-2 justify-center text-[10px] text-slate-500"><div class="flex items-center gap-1"><span class="w-3 h-3 bg-green-200 rounded"></span> ว่าง</div><div class="flex items-center gap-1"><span class="w-3 h-3 bg-orange-400 rounded"></span> มีงาน</div><div class="flex items-center gap-1"><span class="w-3 h-3 bg-slate-200 rounded"></span> วันหยุด</div></div></div><div class="bg-indigo-50 p-4 rounded-xl text-center mb-4"><p class="text-xs text-indigo-500">Total Jobs</p><p class="text-3xl font-bold text-indigo-700">${tasks.length}</p></div>`;
+                document.getElementById('report-content').innerHTML=`<div class="mb-4"><h3 class="font-bold text-slate-700 mb-2">ตารางงานเดือน ${now.toLocaleDateString('th-TH',{month:'long'})}</h3>${h}</div>`;
             }catch(e){alert(e.message)}finally{showLoading(false)}
         }
+        function confirmAddTask(tid,date,name){
+            // Logic Check: Allow only if Admin OR if User is adding for themselves
+            if(userProfile.role!=='admin' && userProfile.role!=='master' && tid!==currentUser.id) return;
+            if(confirm(`ต้องการเพิ่มงานให้ ${name} ในวันที่ ${date} ใช่หรือไม่?`)){renderCreateTask(null,date,tid)}
+        }
 
-        // --- LINE REPORT (V7.3 CORRECTED) ---
-        async function generateLineReport(){
+        // --- 2. Analytics (ApexCharts) ---
+        async function renderAnalytics(){
             showLoading(true);
+            const y=new Date().getFullYear();
             try{
-                const d=new Date(); d.setDate(d.getDate()+1);
-                const dateStr=getLocalDateStr(d);
-                const{data:tasks}=await supabaseClient.from('tasks').select('*,profiles!tasks_trainer_id_fkey(full_name,display_name,team)').eq('date',dateStr);
-                
-                let msg=`🗓️ ${formatDateThai(dateStr)}\n\n💙🧡 ttb Team 🧡💙\n.........................................\n`;
-                const order1=['Thanayot','Yannapat','Natkanit','Pachara','Saowanee','Wattanapan','Arthaphan'];
-                const order2=['Ananya','Nantida','Supaporn','Patchareeya','Suksawad'];
-                const rank=(n,o)=>{const i=o.findIndex(k=>n.includes(k));return i===-1?99:i};
-
-                const printTeam=(name,arr)=>{
-                    msg+=`🌟 ${name}\n`;
-                    allProfiles.filter(p=>p.team===name).sort((a,b)=>rank(a.full_name,arr)-rank(b.full_name,arr)).forEach(m=>{
-                        const myTasks=tasks.filter(k=>k.trainer_id===m.id);
-                        const fName=m.full_name.split(' ')[0];
-                        msg+=`● ${fName} (${m.display_name})\n`;
-                        if(myTasks.length>0){
-                            myTasks.forEach(k=>{
-                                if(k.is_leave){ msg+=`- ${k.leave_type}\n`; }
-                                else {
-                                    // Custom Build String for Line Report (No "ไม่ระบุ")
-                                    let line = `- `;
-                                    if(k.audience && k.audience!=='ไม่ระบุ' && k.audience.trim()!=='') line += `${k.audience} : `;
-                                    if(k.format && k.format!=='ไม่ระบุ' && k.format.trim()!=='') line += `(${k.format}) `;
-                                    line += `${k.course_details||''} `;
-                                    if(k.location && k.location!=='ไม่ระบุ' && k.location.trim()!=='') line += `@${k.location}`;
-                                    msg += `${line}\n`;
-                                    // Time line
-                                    if(k.format && k.format!=='ไม่ระบุ' && k.start_time!=='00:00:00' && k.start_time!=='00:00') {
-                                        msg += `${formatTime(k.start_time)} - ${formatTime(k.end_time)}\n`;
-                                    }
-                                }
-                            });
-                        }
-                        // No tasks = just print name (done) and new line (here)
-                        msg+=`\n`;
-                    });
-                    msg+=`.........................................\n`;
-                };
-
-                printTeam('Training Specialist', order1);
-                printTeam('Mandatory', order2);
-
-                document.getElementById('modal-content').innerHTML=`<div class="p-4"><h3 class="font-bold mb-2">Line Report</h3><textarea id="line-report-text" class="w-full h-64 text-xs border p-2 rounded bg-slate-50">${msg}</textarea><div class="flex gap-2 mt-3"><button onclick="copyLineReportContent()" class="flex-1 py-3 bg-green-500 text-white font-bold rounded-xl shadow-md">Copy All</button><button onclick="document.getElementById('modal-container').classList.add('hidden')" class="w-1/3 py-3 bg-slate-200 font-bold text-slate-700 rounded-xl">Close</button></div></div>`;
-                document.getElementById('modal-container').classList.remove('hidden');
+                const{data:t}=await supabaseClient.from('tasks').select('*').gte('date',`${y}-01-01`).lte('date',`${y}-12-31`);
+                rawTasks=t;
+                document.getElementById('report-content').innerHTML=`<div class="space-y-4"><div class="flex justify-end mb-2"><button onclick="renderAnalyticsView('my')" id="btn-an-my" class="px-3 py-1 text-xs rounded bg-blue-600 text-white mr-2">ของฉัน</button><button onclick="renderAnalyticsView('team')" id="btn-an-team" class="px-3 py-1 text-xs rounded bg-slate-200 text-slate-600">ทั้งทีม</button></div><div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm"><h3 class="text-sm font-bold text-slate-700 mb-2">Yearly Workload Wave</h3><div id="chart-wave"></div></div></div>`;
+                renderAnalyticsView('my'); // Default
             }catch(e){alert(e.message)}finally{showLoading(false)}
         }
-        function copyLineReportContent(){const t=document.getElementById('line-report-text');t.select();t.setSelectionRange(0,99999);navigator.clipboard.writeText(t.value).then(()=>alert("คัดลอกเรียบร้อย!"))}
+        function renderAnalyticsView(mode){
+            const isTeam = mode==='team';
+            document.getElementById('btn-an-my').className = isTeam ? "px-3 py-1 text-xs rounded bg-slate-200 text-slate-600 mr-2" : "px-3 py-1 text-xs rounded bg-blue-600 text-white mr-2";
+            document.getElementById('btn-an-team').className = isTeam ? "px-3 py-1 text-xs rounded bg-blue-600 text-white" : "px-3 py-1 text-xs rounded bg-slate-200 text-slate-600";
+            
+            const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+            const dataJobs = Array(12).fill(0);
+            rawTasks.forEach(t=>{
+                if(isTeam || t.trainer_id === currentUser.id){
+                    const m = new Date(t.date).getMonth();
+                    dataJobs[m]++;
+                }
+            });
+            
+            document.getElementById('chart-wave').innerHTML='';
+            const opts = {
+                series: [{ name: 'Jobs', data: dataJobs }],
+                chart: { type: 'area', height: 250, toolbar:{show:false} },
+                colors: ['#3b82f6'],
+                fill: { type: 'gradient', gradient: { shadeIntensity:1, opacityFrom:0.7, opacityTo:0.2, stops:[0,90,100] } },
+                dataLabels: { enabled: true },
+                xaxis: { categories: months },
+                stroke: { curve: 'smooth' }
+            };
+            new ApexCharts(document.getElementById('chart-wave'), opts).render();
+        }
 
-        // ... (Keep other functions: renderDailyReportSelector, renderDailyResult, renderAvailabilitySelector, renderCheckWhoIsFree, runCheckWhoIsFree, renderAvailabilityCheck, runAvailabilityCheck, renderExportModal, executeExport, renderCreateTask, handleSaveTask, deleteTask, renderProfile, handleChangePassword, handleCreateUser) ...
+        // ... (Keep existing report functions: renderDailyReportSelector, renderDailyResult, renderAvailabilitySelector, renderCheckWhoIsFree, runCheckWhoIsFree, renderAvailabilityCheck, runAvailabilityCheck, generateLineReport, copyLineReportContent, renderExportModal, executeExport) ...
         function renderDailyReportSelector(){document.getElementById('report-content').innerHTML=`<div class="grid grid-cols-2 gap-3"><button onclick="renderDailyResult('today')" class="bg-white p-4 rounded-xl shadow-sm text-center">วันนี้</button><button onclick="renderDailyResult('tomorrow')" class="bg-white p-4 rounded-xl shadow-sm text-center">พรุ่งนี้</button></div><div id="daily-result" class="mt-4 space-y-2"></div>`}
         async function renderDailyResult(day){showLoading(true);try{const d=new Date();if(day==='tomorrow')d.setDate(d.getDate()+1);const dateStr=getLocalDateStr(d);const{data:tasks}=await supabaseClient.from('tasks').select('*,profiles!tasks_trainer_id_fkey(full_name,display_name,avatar_url)').eq('date',dateStr).order('start_time');document.getElementById('daily-result').innerHTML=tasks.length===0?'<p class="text-center text-slate-400">No Tasks</p>':tasks.map(t=>renderTaskCard(t,true,true)).join('')}catch(e){alert(e.message)}finally{showLoading(false)}}
         function renderAvailabilitySelector(){document.getElementById('report-content').innerHTML = `<div class="grid grid-cols-1 gap-4"><button onclick="renderAvailabilityCheck()" class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:bg-slate-50 flex items-center gap-3"><div class="bg-blue-100 text-blue-600 w-10 h-10 rounded-full flex items-center justify-center"><i class="fa-solid fa-users-viewfinder"></i></div><div class="text-left"><h3 class="font-bold text-slate-700">หาวันว่าง (Find Time)</h3><p class="text-xs text-slate-400">จับกลุ่มเพื่อหาวันที่ว่างพร้อมกัน</p></div></button><button onclick="renderCheckWhoIsFree()" class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:bg-slate-50 flex items-center gap-3"><div class="bg-indigo-100 text-indigo-600 w-10 h-10 rounded-full flex items-center justify-center"><i class="fa-solid fa-calendar-check"></i></div><div class="text-left"><h3 class="font-bold text-slate-700">หาคนว่าง (Find People)</h3><p class="text-xs text-slate-400">ระบุวันที่ เพื่อดูว่าใครว่างบ้าง</p></div></button></div><div id="check-container" class="mt-4"></div>`;}
@@ -244,16 +214,170 @@
         function toggleAvUserSelect() { document.getElementById('av-specific-users').classList.toggle('hidden', document.getElementById('av-group').value !== 'select'); }
         function toggleAvDateInput() { document.getElementById('av-month-picker').classList.toggle('hidden', document.getElementById('av-mode').value !== 'month'); }
         async function runAvailabilityCheck(){showLoading(true);try{const group=document.getElementById('av-group').value;const mode=document.getElementById('av-mode').value;let ids=[];if(group==='all')ids=allProfiles.filter(p=>p.role!=='master').map(p=>p.id);else if(group==='specialist')ids=allProfiles.filter(p=>p.team==='Training Specialist').map(p=>p.id);else if(group==='mandatory')ids=allProfiles.filter(p=>p.team==='Mandatory').map(p=>p.id);else ids=Array.from(document.querySelectorAll('.av-user-cb:checked')).map(cb=>cb.value);if(ids.length===0){alert('เลือกคนก่อน');showLoading(false);return}let start=new Date(),end=new Date();if(mode==='month'){const m=document.getElementById('av-month-picker').value;if(!m){alert('เลือกเดือน');showLoading(false);return}start=new Date(m+'-01');end=new Date(start.getFullYear(),start.getMonth()+1,0)}else{end.setDate(start.getDate()+60)}const startDateStr=getLocalDateStr(start);const endDateStr=getLocalDateStr(end);const{data:tasks}=await supabaseClient.from('tasks').select('date,trainer_id').in('trainer_id',ids).gte('date',startDateStr).lte('date',endDateStr);const busy={};tasks.forEach(t=>{if(!busy[t.date])busy[t.date]=new Set();busy[t.date].add(t.trainer_id)});const resultContainer=document.getElementById('av-result');resultContainer.innerHTML='<h3 class="font-bold mb-3">ผลการค้นหา</h3>';resultContainer.classList.remove('hidden');let found=false;let current=new Date(start);if(mode==='earliest'){while(current<=end){const dStr=getLocalDateStr(current);const conflict=[...(busy[dStr]||[])].some(uid=>ids.includes(uid));if(!conflict&&current.getDay()!==0&&current.getDay()!==6){resultContainer.innerHTML=`<div class="p-4 bg-green-50 border border-green-200 rounded-xl text-center"><p class="text-green-800 font-bold text-lg">ว่างเร็วที่สุด!</p><p class="text-3xl font-bold text-green-600 my-2">${formatDateThai(dStr)}</p></div>`;found=true;break}current.setDate(current.getDate()+1)}}else{let html='<div class="grid grid-cols-4 gap-2">';while(current<=end){const dStr=getLocalDateStr(current);const conflict=[...(busy[dStr]||[])].some(uid=>ids.includes(uid));if(!conflict&&current.getDay()!==0&&current.getDay()!==6){html+=`<div class="bg-green-100 text-green-700 p-2 rounded text-center text-xs font-bold">${current.getDate()}</div>`;found=true}current.setDate(current.getDate()+1)}resultContainer.innerHTML=html+'</div>'}if(!found)resultContainer.innerHTML='<p>ไม่พบวันว่าง</p>'}catch(e){alert(e.message)}finally{showLoading(false)}}
+        async function generateLineReport(){showLoading(true);try{const d=new Date();d.setDate(d.getDate()+1);const dateStr=getLocalDateStr(d);const{data:tasks}=await supabaseClient.from('tasks').select('*,profiles!tasks_trainer_id_fkey(full_name,display_name,team)').eq('date',dateStr);let msg=`🗓️ ${formatDateThai(dateStr)}\n\n💙🧡 ttb Team 🧡💙\n.........................................\n`;const order1=['Thanayot','Yannapat','Natkanit','Pachara','Saowanee','Wattanapan','Arthaphan'];const order2=['Ananya','Nantida','Supaporn','Patchareeya','Suksawad'];const rank=(n,o)=>{const i=o.findIndex(k=>n.includes(k));return i===-1?99:i};const print=(name,arr)=>{msg+=`🌟 ${name}\n`;allProfiles.filter(p=>p.team===name).sort((a,b)=>rank(a.full_name,arr)-rank(b.full_name,arr)).forEach(m=>{const t=tasks.filter(k=>k.trainer_id===m.id);msg+=`● ${formatNameShort(m)}\n`;t.forEach(k=>{msg+=k.is_leave?`- ${k.leave_type}\n`:`- ${buildTaskString(k)}\n`});msg+=`\n`});msg+=`.........................................\n`};print('Training Specialist',order1);print('Mandatory',order2);document.getElementById('modal-content').innerHTML=`<div class="p-4"><h3 class="font-bold mb-2">Line Report</h3><textarea id="line-report-text" class="w-full h-64 text-xs border p-2 rounded bg-slate-50">${msg}</textarea><div class="flex gap-2 mt-3"><button onclick="copyLineReportContent()" class="flex-1 py-3 bg-green-500 text-white font-bold rounded-xl shadow-md">Copy All</button><button onclick="document.getElementById('modal-container').classList.add('hidden')" class="w-1/3 py-3 bg-slate-200 font-bold text-slate-700 rounded-xl">Close</button></div></div>`;document.getElementById('modal-container').classList.remove('hidden')}catch(e){alert(e.message)}finally{showLoading(false)}}
+        function copyLineReportContent(){const t=document.getElementById('line-report-text');t.select();t.setSelectionRange(0,99999);navigator.clipboard.writeText(t.value).then(()=>alert("คัดลอกเรียบร้อย!"))}
         function renderExportModal() { document.getElementById('modal-content').innerHTML = `<div class="p-6"><h3 class="font-bold text-lg mb-4">📥 Export Data</h3><div class="mb-4"><label class="block text-xs font-bold text-slate-500 mb-1">ช่วงเวลา</label><select id="exp-range" class="input-rounded w-full px-4 py-2 text-sm" onchange="toggleExportDates()"><option value="mtd">Month to Date</option><option value="ytd">Year to Date</option><option value="custom">Custom</option></select><div id="exp-dates" class="hidden grid-cols-2 gap-2 mt-2"><input type="date" id="exp-start" class="input-rounded w-full px-2 py-2 text-sm"><input type="date" id="exp-end" class="input-rounded w-full px-2 py-2 text-sm"></div></div><div class="mb-4"><label class="block text-xs font-bold text-slate-500 mb-1">กลุ่มเป้าหมาย</label><select id="exp-target" class="input-rounded w-full px-4 py-2 text-sm" onchange="toggleExportUsers()"><option value="all">All Users</option><option value="specialist">Training Specialist</option><option value="mandatory">Mandatory</option><option value="specific">Select Person...</option></select><div id="exp-users" class="hidden mt-2 p-2 bg-slate-50 rounded-lg max-h-40 overflow-y-auto">${allProfiles.filter(p=>p.role!=='master').map(p=>`<label class="flex items-center gap-2 text-sm mb-1"><input type="checkbox" value="${p.id}" class="exp-user-cb"> ${formatNameShort(p)}</label>`).join('')}</div></div><div class="flex gap-2 mt-6"><button onclick="document.getElementById('modal-container').classList.add('hidden')" class="flex-1 py-3 border border-slate-200 rounded-xl text-sm font-bold">Cancel</button><button onclick="executeExport()" class="flex-1 py-3 bg-green-600 text-white rounded-xl text-sm font-bold shadow-md">Download</button></div></div>`; document.getElementById('modal-container').classList.remove('hidden'); }
         function toggleExportDates() { document.getElementById('exp-dates').classList.toggle('hidden', document.getElementById('exp-range').value !== 'custom'); }
         function toggleExportUsers() { document.getElementById('exp-users').classList.toggle('hidden', document.getElementById('exp-target').value !== 'specific'); }
         async function executeExport() { showLoading(true); try { const range = document.getElementById('exp-range').value; let start, end; const now = new Date(); if (range === 'mtd') { start = getLocalDateStr(new Date(now.getFullYear(), now.getMonth(), 1)); end = getLocalDateStr(now); } else if (range === 'ytd') { start = getLocalDateStr(new Date(now.getFullYear(), 0, 1)); end = getLocalDateStr(now); } else { start = document.getElementById('exp-start').value; end = document.getElementById('exp-end').value; if(!start || !end) throw new Error('Invalid Date'); } const target = document.getElementById('exp-target').value; let userIds = []; if (target === 'all') userIds = allProfiles.filter(p=>p.role!=='master').map(p=>p.id); else if (target === 'specialist') userIds = allProfiles.filter(p=>p.team==='Training Specialist').map(p=>p.id); else if (target === 'mandatory') userIds = allProfiles.filter(p=>p.team==='Mandatory').map(p=>p.id); else { userIds = Array.from(document.querySelectorAll('.exp-user-cb:checked')).map(cb=>cb.value); if(userIds.length===0) throw new Error('Select at least 1 person'); } const { data: tasks, error } = await supabaseClient.from('tasks').select('*, profiles!tasks_trainer_id_fkey(full_name, team, role)').in('trainer_id', userIds).gte('date', start).lte('date', end); if (error) throw error; if (!tasks.length) throw new Error('No Data Found'); const exportData = tasks.map(t => ({ Date: t.date, Start: t.start_time, End: t.end_time, Trainer: t.profiles?.full_name||'Unknown', Team: t.profiles?.team||'', Course: t.course_details, Format: t.format, Audience: t.audience, Location: t.location, IsLeave: t.is_leave?'Yes':'No', LeaveType: t.leave_type })); const ws = XLSX.utils.json_to_sheet(exportData); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Tasks"); XLSX.writeFile(wb, `Trainer_Export_${getLocalDateStr(now)}.xlsx`); document.getElementById('modal-container').classList.add('hidden'); } catch (e) { alert(e.message); } finally { showLoading(false); } }
-        async function renderCreateTask(taskId=null,datePrefill=null){setActiveNav('');showLoading(true);let task=null;if(taskId){const{data}=await supabaseClient.from('tasks').select('*').eq('id',taskId).single();task=data}let trainerInputHTML='';if(['admin','master'].includes(userProfile.role)){trainerInputHTML=`<div class="mb-4"><label class="text-xs font-bold text-slate-500 ml-1">ผู้สอน</label><select id="task-trainer" multiple class="input-rounded w-full px-4 py-3 bg-white text-sm h-32">${allProfiles.sort((a,b)=>(a.full_name||'').localeCompare(b.full_name||'')).map(p=>`<option value="${p.id}" ${task&&task.trainer_id===p.id?'selected':''}>${formatNameShort(p)}</option>`).join('')}</select></div>`}else{trainerInputHTML=`<input type="hidden" id="task-trainer" value="${currentUser.id}">`}const dPrefill=datePrefill||getLocalDateStr();const html=`<div class="max-w-md mx-auto"><div class="flex justify-between items-center mb-6"><h2 class="text-xl font-bold text-slate-800">${taskId?'แก้ไขงาน':'สร้างงานใหม่'}</h2><button onclick="renderDashboard()" class="text-slate-400"><i class="fa-solid fa-xmark"></i></button></div><form onsubmit="handleSaveTask(event,'${taskId||''}')" class="space-y-4">${trainerInputHTML}<div class="flex items-center gap-3 mb-2 bg-slate-50 p-3 rounded-xl"><input type="checkbox" id="is-leave" onchange="toggleLeaveMode()" ${task?.is_leave?'checked':''} class="w-5 h-5"><label for="is-leave" class="text-sm font-medium text-slate-700">บันทึกเป็นวันลา / วันหยุด</label></div><div id="leave-fields" class="${task?.is_leave?'':'hidden'}"><label class="text-xs font-bold text-slate-500 ml-1">ประเภทวันลา</label><select id="leave-type" class="input-rounded w-full px-4 py-3 bg-white text-sm"><option value="Annual leave">Annual Leave</option><option value="Sick leave">Sick Leave</option><option value="Business leave">Business Leave</option></select></div><div id="work-fields" class="${task?.is_leave?'hidden':''} space-y-4"><div><label class="text-xs font-bold text-slate-500 ml-1">Audience</label><select id="audience" class="input-rounded w-full px-4 py-3 bg-white text-sm"><option value="">ไม่ระบุ</option><option value="ttb" ${task?.audience==='ttb'?'selected':''}>ttb</option><option value="PD ttb" ${task?.audience==='PD ttb'?'selected':''}>PD ttb</option><option value="PRU" ${task?.audience==='PRU'?'selected':''}>PRU</option><option value="Customer" ${task?.audience==='Customer'?'selected':''}>Customer</option><option value="Other" ${task?.audience==='Other'?'selected':''}>Other</option></select></div><div><label class="text-xs font-bold text-slate-500 ml-1">หลักสูตร / รายละเอียด</label><input type="text" id="course-details" value="${task?.course_details||''}" class="input-rounded w-full px-4 py-3 bg-white text-sm" placeholder="ระบุชื่อหลักสูตร"></div><div class="grid grid-cols-2 gap-3"><div><label class="text-xs font-bold text-slate-500 ml-1">วันที่</label><input type="date" id="date" value="${task?.date||dPrefill}" required class="input-rounded w-full px-4 py-3 bg-white text-sm"></div><div><label class="text-xs font-bold text-slate-500 ml-1">รูปแบบ</label><select id="format" class="input-rounded w-full px-4 py-3 bg-white text-sm" onchange="toggleTimeFields()"><option value="">ไม่ระบุ</option><option value="Online" ${task?.format==='Online'?'selected':''}>Online</option><option value="F2F" ${task?.format==='F2F'?'selected':''}>F2F</option></select></div></div><div id="time-inputs" class="grid grid-cols-2 gap-3 ${!task?.format||task?.format==='ไม่ระบุ'?'hidden':''}"><div><label class="text-xs font-bold text-slate-500 ml-1">เวลาเริ่ม</label><input type="time" id="start-time" value="${task?.start_time?.substring(0,5)||'09:00'}" class="input-rounded w-full px-4 py-3 bg-white text-sm"></div><div><label class="text-xs font-bold text-slate-500 ml-1">เวลาจบ</label><input type="time" id="end-time" value="${task?.end_time?.substring(0,5)||'17:00'}" class="input-rounded w-full px-4 py-3 bg-white text-sm"></div></div><div><label class="text-xs font-bold text-slate-500 ml-1">สถานที่ / Link</label><input type="text" id="location" value="${task?.location||''}" class="input-rounded w-full px-4 py-3 bg-white text-sm"></div></div><button type="submit" class="w-full bg-gradient-primary text-white font-bold py-4 rounded-xl shadow-lg mt-4">${taskId?'บันทึก':'สร้างงาน'}</button></form></div>`;document.getElementById('main-content').innerHTML=html;if(task?.is_leave)toggleLeaveMode();toggleTimeFields();showLoading(false)}
-        function toggleLeaveMode(){const isLeave=document.getElementById('is-leave').checked;document.getElementById('leave-fields').classList.toggle('hidden',!isLeave);document.getElementById('work-fields').classList.toggle('hidden',isLeave)}
-        function toggleTimeFields(){const val=document.getElementById('format').value;if(val==="")document.getElementById('time-inputs').classList.add('hidden');else document.getElementById('time-inputs').classList.remove('hidden')}
-        async function handleSaveTask(e,taskId){e.preventDefault();showLoading(true);const tSelect=document.getElementById('task-trainer');const trainers=tSelect.tagName==='SELECT'?Array.from(tSelect.selectedOptions).map(o=>o.value):[tSelect.value];if(trainers.length===0){alert('เลือกผู้สอน');showLoading(false);return}const isLeave=document.getElementById('is-leave').checked;const payload={date:document.getElementById('date').value,is_leave:isLeave,created_by:currentUser.id};if(!taskId){for(const tid of trainers){const{data:existing}=await supabaseClient.from('tasks').select('*').eq('trainer_id',tid).eq('date',payload.date);if(existing&&existing.length>0){let conflictType='none';let conflictTask=null;const newFormat=document.getElementById('format').value;const newStart=document.getElementById('start-time').value;const newEnd=document.getElementById('end-time').value;for(const t of existing){if(t.is_leave){conflictType='soft';conflictTask=t;break}if(isLeave){conflictType='soft';conflictTask=t;break}const hasTimeNew=newFormat!==''&&newStart&&newStart!=='00:00';const hasTimeOld=t.format&&t.start_time!=='00:00:00'&&t.start_time!=='00:00';if(hasTimeNew&&hasTimeOld){if(newStart<t.end_time&&newEnd>t.start_time){conflictType='hard';conflictTask=t;break}}if(conflictType!=='hard'){conflictType='soft';conflictTask=t}}if(conflictType==='hard'){alert(`ไม่สามารถบันทึกได้: เวลาชนกับงาน "${conflictTask.course_details}"`);showLoading(false);return}if(conflictType==='soft'){if(!confirm(`มีงาน "${conflictTask.is_leave?conflictTask.leave_type:conflictTask.course_details}" อยู่ในวันนี้แล้ว ยืนยันที่จะบันทึกเพิ่มหรือไม่?`)){showLoading(false);return}}}}}if(isLeave){payload.leave_type=document.getElementById('leave-type').value;payload.start_time='00:00';payload.end_time='00:00'}else{payload.course_details=document.getElementById('course-details').value;const fmt=document.getElementById('format').value;payload.format=fmt===""?null:fmt;const aud=document.getElementById('audience').value;payload.audience=aud===""?null:aud;payload.location=document.getElementById('location').value;if(!payload.format){payload.start_time='00:00';payload.end_time='00:00'}else{payload.start_time=document.getElementById('start-time').value;payload.end_time=document.getElementById('end-time').value}}try{if(taskId)await supabaseClient.from('tasks').update(payload).eq('id',taskId);else await supabaseClient.from('tasks').insert(trainers.map(id=>({...payload,trainer_id:id})));alert('บันทึกสำเร็จ');renderDashboard()}catch(e){alert(e.message)}finally{showLoading(false)}}
-        async function deleteTask(taskId,isFromModal=false){if(confirm('ลบงานนี้?')){await supabaseClient.from('tasks').delete().eq('id',taskId);if(isFromModal){document.getElementById('modal-container').classList.add('hidden');renderCalendar()}else{renderDashboard()}}}
-        function renderProfile(){setActiveNav('nav-profile');const isAdmin=['admin','master'].includes(userProfile.role);document.getElementById('main-content').innerHTML=`<div class="max-w-sm mx-auto space-y-6"><div class="bg-white rounded-2xl shadow-sm p-6 text-center border border-slate-100 mt-6"><div class="w-20 h-20 rounded-full bg-blue-100 mx-auto mb-4 flex items-center justify-center text-xl font-bold text-blue-600 border-4 border-white shadow-sm">${renderAvatar(userProfile,'w-full h-full object-cover')}</div><h2 class="text-xl font-bold text-slate-800">${userProfile.full_name}</h2><div class="inline-block px-3 py-1 bg-slate-50 text-slate-600 rounded-full text-xs font-bold mt-2">${userProfile.team||'No Team'}</div></div><div class="bg-white rounded-2xl shadow-sm p-4 border border-slate-100 flex items-center justify-between"><span class="text-sm font-bold text-slate-700">รูปโปรไฟล์</span><label class="bg-blue-50 text-blue-600 px-3 py-1 rounded-lg text-xs font-bold cursor-pointer hover:bg-blue-100">อัปโหลด<input type="file" class="hidden" accept="image/*" onchange="uploadAvatar(this)"></label></div>${isAdmin?`<div class="bg-white rounded-2xl shadow-sm p-6 border border-slate-100"><h3 class="font-bold text-slate-700 mb-4"><i class="fa-solid fa-users-cog mr-2"></i>จัดการผู้ใช้</h3><form onsubmit="handleCreateUser(event)" class="space-y-3"><input type="email" id="new-user-email" placeholder="Email" class="input-rounded w-full px-4 py-2 bg-slate-50 text-sm" required><input type="password" id="new-user-pass" placeholder="Password" class="input-rounded w-full px-4 py-2 bg-slate-50 text-sm" required><input type="text" id="new-user-name" placeholder="Full Name" class="input-rounded w-full px-4 py-2 bg-slate-50 text-sm" required><input type="text" id="new-user-display" placeholder="Nickname" class="input-rounded w-full px-4 py-2 bg-slate-50 text-sm" required><select id="new-user-role" class="input-rounded w-full px-4 py-2 bg-slate-50 text-sm"><option value="trainer">Trainer</option><option value="admin">Admin</option></select><select id="new-user-team" class="input-rounded w-full px-4 py-2 bg-slate-50 text-sm"><option value="Training Specialist">Training Specialist</option><option value="Mandatory">Mandatory</option></select><button type="submit" class="w-full py-2 bg-indigo-600 text-white rounded-lg font-bold text-sm">สร้างผู้ใช้ใหม่</button></form></div>`:''}<div class="bg-white rounded-2xl shadow-sm p-6 border border-slate-100"><h3 class="font-bold text-slate-700 mb-4">🔐 เปลี่ยนรหัสผ่าน</h3><form onsubmit="handleChangePassword(event)"><div class="space-y-3"><input type="password" id="new-password" placeholder="รหัสผ่านใหม่" class="input-rounded w-full px-4 py-3 bg-slate-50 text-sm" required minlength="6"><button type="submit" class="w-full py-3 bg-blue-600 text-white rounded-xl font-bold">บันทึก</button></div></form></div></div>`}
+
+        // --- 4. CREATE / EDIT TASK (UPDATED) ---
+        async function renderCreateTask(taskId = null, datePrefill = null, trainerPrefill = null) {
+            setActiveNav(''); showLoading(true);
+            let task = null;
+            if(taskId) { const { data } = await supabaseClient.from('tasks').select('*').eq('id', taskId).single(); task = data; }
+
+            let trainerInputHTML = '';
+            // New V8 Logic: If Admin/Master
+            if (['admin', 'master'].includes(userProfile.role)) {
+                // If prefill exists (from timeline), select that person. Else select task owner or none.
+                const selectedTrainer = task ? task.trainer_id : trainerPrefill;
+                trainerInputHTML = `<div class="mb-4"><label class="text-xs font-bold text-slate-500 ml-1">ผู้สอน</label><select id="task-trainer" multiple class="input-rounded w-full px-4 py-3 bg-white text-sm h-32">${allProfiles.sort((a,b)=>a.full_name.localeCompare(b.full_name)).map(p=>`<option value="${p.id}" ${p.id===selectedTrainer?'selected':''}>${formatNameShort(p)}</option>`).join('')}</select></div>`;
+            } else { 
+                // Trainer always locked to self
+                trainerInputHTML = `<input type="hidden" id="task-trainer" value="${currentUser.id}">`; 
+            }
+
+            const html = `
+                <div class="max-w-md mx-auto">
+                    <div class="flex justify-between items-center mb-6"><h2 class="text-xl font-bold text-slate-800">${taskId ? 'แก้ไขงาน' : 'สร้างงานใหม่'}</h2><button onclick="renderDashboard()" class="text-slate-400"><i class="fa-solid fa-xmark"></i></button></div>
+                    <form onsubmit="handleSaveTask(event, '${taskId || ''}')" class="space-y-4">
+                        ${trainerInputHTML}
+                        <div class="flex items-center gap-3 mb-2 bg-slate-50 p-3 rounded-xl"><input type="checkbox" id="is-leave" onchange="toggleLeaveMode()" ${task?.is_leave ? 'checked' : ''} class="w-5 h-5"><label for="is-leave" class="text-sm font-medium text-slate-700">บันทึกเป็นวันลา / วันหยุด</label></div>
+                        <div id="leave-fields" class="${task?.is_leave ? '' : 'hidden'}"><label class="text-xs font-bold text-slate-500 ml-1">ประเภทวันลา</label><select id="leave-type" class="input-rounded w-full px-4 py-3 bg-white text-sm"><option value="Annual leave">Annual Leave</option><option value="Sick leave">Sick Leave</option><option value="Business leave">Business Leave</option></select></div>
+                        <div id="work-fields" class="${task?.is_leave ? 'hidden' : ''} space-y-4">
+                            <div><label class="text-xs font-bold text-slate-500 ml-1">Audience</label><select id="audience" class="input-rounded w-full px-4 py-3 bg-white text-sm"><option value="">ไม่ระบุ</option><option value="ttb" ${task?.audience==='ttb'?'selected':''}>ttb</option><option value="PD ttb" ${task?.audience==='PD ttb'?'selected':''}>PD ttb</option><option value="PRU" ${task?.audience==='PRU'?'selected':''}>PRU</option><option value="Customer" ${task?.audience==='Customer'?'selected':''}>Customer</option><option value="Other" ${task?.audience==='Other'?'selected':''}>Other</option></select></div>
+                            <div><label class="text-xs font-bold text-slate-500 ml-1">หลักสูตร / รายละเอียด</label><input type="text" id="course-details" value="${task?.course_details || ''}" class="input-rounded w-full px-4 py-3 bg-white text-sm" placeholder="ระบุชื่อหลักสูตร"></div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div><label class="text-xs font-bold text-slate-500 ml-1">วันที่</label><input type="date" id="date" value="${task?.date || datePrefill || getLocalDateStr()}" required class="input-rounded w-full px-4 py-3 bg-white text-sm"></div>
+                                <div><label class="text-xs font-bold text-slate-500 ml-1">รูปแบบ</label><select id="format" class="input-rounded w-full px-4 py-3 bg-white text-sm" onchange="toggleTimeFields()"><option value="">ไม่ระบุ</option><option value="Online" ${task?.format==='Online'?'selected':''}>Online</option><option value="F2F" ${task?.format==='F2F'?'selected':''}>F2F</option></select></div>
+                            </div>
+                            <div id="time-inputs" class="grid grid-cols-2 gap-3 ${!task?.format || task?.format==='ไม่ระบุ' ? 'hidden' : ''}">
+                                <div><label class="text-xs font-bold text-slate-500 ml-1">เวลาเริ่ม</label><input type="time" id="start-time" value="${task?.start_time?.substring(0,5) || '09:00'}" class="input-rounded w-full px-4 py-3 bg-white text-sm"></div>
+                                <div><label class="text-xs font-bold text-slate-500 ml-1">เวลาจบ</label><input type="time" id="end-time" value="${task?.end_time?.substring(0,5) || '17:00'}" class="input-rounded w-full px-4 py-3 bg-white text-sm"></div>
+                            </div>
+                            <div><label class="text-xs font-bold text-slate-500 ml-1">สถานที่ / Link</label><input type="text" id="location" value="${task?.location || ''}" class="input-rounded w-full px-4 py-3 bg-white text-sm"></div>
+                        </div>
+                        <button type="submit" class="w-full bg-gradient-primary text-white font-bold py-4 rounded-xl shadow-lg mt-4">${taskId ? 'บันทึก' : 'สร้างงาน'}</button>
+                        ${taskId ? `<button type="button" onclick="deleteTask('${taskId}')" class="w-full bg-red-50 text-red-500 font-bold py-3 rounded-xl mt-2">ลบงานนี้</button>` : ''}
+                    </form></div>`;
+            document.getElementById('main-content').innerHTML = html;
+            if(task?.is_leave) toggleLeaveMode();
+            toggleTimeFields(); 
+            showLoading(false);
+        }
+
+        function toggleLeaveMode() {
+            const isLeave = document.getElementById('is-leave').checked;
+            document.getElementById('leave-fields').classList.toggle('hidden', !isLeave);
+            document.getElementById('work-fields').classList.toggle('hidden', isLeave);
+        }
+        function toggleTimeFields() {
+            const val = document.getElementById('format').value;
+            if(val === "") document.getElementById('time-inputs').classList.add('hidden');
+            else document.getElementById('time-inputs').classList.remove('hidden');
+        }
+
+        async function handleSaveTask(e, taskId) {
+            e.preventDefault(); showLoading(true);
+            const tSelect = document.getElementById('task-trainer');
+            const trainers = tSelect.tagName==='SELECT' ? Array.from(tSelect.selectedOptions).map(o=>o.value) : [tSelect.value];
+            if(trainers.length===0) { alert('เลือกผู้สอน'); showLoading(false); return; }
+            
+            const isLeave = document.getElementById('is-leave').checked;
+            const payload = { date: document.getElementById('date').value, is_leave: isLeave, created_by: currentUser.id };
+            
+            if(!taskId) {
+                for(const tid of trainers) {
+                    const { data: existing } = await supabaseClient.from('tasks').select('*').eq('trainer_id', tid).eq('date', payload.date);
+                    if(existing && existing.length > 0) {
+                        let conflictType = 'none'; let conflictTask = null;
+                        const newFormat = document.getElementById('format').value;
+                        const newStart = document.getElementById('start-time').value;
+                        const newEnd = document.getElementById('end-time').value;
+
+                        for(const t of existing) {
+                            if(t.is_leave) { conflictType = 'soft'; conflictTask = t; break; }
+                            if(isLeave) { conflictType = 'soft'; conflictTask = t; break; }
+
+                            const hasTimeNew = newFormat !== '' && newStart && newStart !== '00:00';
+                            const hasTimeOld = t.format && t.start_time !== '00:00:00' && t.start_time !== '00:00';
+
+                            if(hasTimeNew && hasTimeOld) {
+                                if(newStart < t.end_time && newEnd > t.start_time) { conflictType = 'hard'; conflictTask = t; break; }
+                            }
+                            if(conflictType !== 'hard') { conflictType = 'soft'; conflictTask = t; }
+                        }
+
+                        if(conflictType === 'hard') { alert(`ไม่สามารถบันทึกได้: เวลาชนกับงาน "${conflictTask.course_details}"`); showLoading(false); return; }
+                        if(conflictType === 'soft') {
+                            if(!confirm(`มีงาน "${conflictTask.is_leave ? conflictTask.leave_type : conflictTask.course_details}" อยู่ในวันนี้แล้ว ยืนยันที่จะบันทึกเพิ่มหรือไม่?`)) { showLoading(false); return; }
+                        }
+                    }
+                }
+            }
+
+            if(isLeave) { payload.leave_type = document.getElementById('leave-type').value; payload.start_time='00:00'; payload.end_time='00:00'; }
+            else {
+                payload.course_details = document.getElementById('course-details').value;
+                const fmt = document.getElementById('format').value;
+                payload.format = fmt === "" ? null : fmt;
+                const aud = document.getElementById('audience').value;
+                payload.audience = aud === "" ? null : aud;
+                payload.location = document.getElementById('location').value;
+                if(!payload.format) { payload.start_time='00:00'; payload.end_time='00:00'; }
+                else { payload.start_time = document.getElementById('start-time').value; payload.end_time = document.getElementById('end-time').value; }
+            }
+
+            try {
+                if(taskId) await supabaseClient.from('tasks').update(payload).eq('id', taskId);
+                else await supabaseClient.from('tasks').insert(trainers.map(id => ({...payload, trainer_id: id})));
+                alert('บันทึกสำเร็จ'); renderDashboard();
+            } catch(e) { alert(e.message); } finally { showLoading(false); }
+        }
+
+        async function deleteTask(taskId, isFromModal = false) { 
+            if(confirm('ลบงานนี้?')) { await supabaseClient.from('tasks').delete().eq('id', taskId); if(isFromModal){document.getElementById('modal-container').classList.add('hidden');renderCalendar()}else{renderDashboard()} } 
+        }
+
+        // ================= 5. PROFILE =================
+        function renderProfile() {
+            setActiveNav('nav-profile');
+            const isAdmin = ['admin', 'master'].includes(userProfile.role);
+            
+            document.getElementById('main-content').innerHTML = `
+                <div class="max-w-sm mx-auto space-y-6">
+                    <div class="bg-white rounded-2xl shadow-sm p-6 text-center border border-slate-100 mt-6">
+                        <div class="w-20 h-20 rounded-full bg-blue-100 mx-auto mb-4 flex items-center justify-center text-xl font-bold text-blue-600 border-4 border-white shadow-sm">${renderAvatar(userProfile,'w-full h-full object-cover')}</div>
+                        <h2 class="text-xl font-bold text-slate-800">${userProfile.full_name}</h2>
+                        <div class="inline-block px-3 py-1 bg-slate-50 text-slate-600 rounded-full text-xs font-bold mt-2">${userProfile.team || 'No Team'}</div>
+                    </div>
+                    <div class="bg-white rounded-2xl shadow-sm p-4 border border-slate-100 flex items-center justify-between">
+                        <span class="text-sm font-bold text-slate-700">รูปโปรไฟล์</span>
+                        <label class="bg-blue-50 text-blue-600 px-3 py-1 rounded-lg text-xs font-bold cursor-pointer hover:bg-blue-100">อัปโหลด<input type="file" class="hidden" accept="image/*" onchange="uploadAvatar(this)"></label>
+                    </div>
+                    ${isAdmin ? `
+                    <div class="bg-white rounded-2xl shadow-sm p-6 border border-slate-100">
+                        <details>
+                            <summary class="font-bold text-slate-700 mb-4 cursor-pointer list-none flex justify-between items-center"><span><i class="fa-solid fa-users-cog mr-2"></i>จัดการผู้ใช้</span><i class="fa-solid fa-chevron-down"></i></summary>
+                            <form onsubmit="handleCreateUser(event)" class="space-y-3 mt-4">
+                                <input type="email" id="new-user-email" placeholder="Email" class="input-rounded w-full px-4 py-2 bg-slate-50 text-sm" required>
+                                <input type="password" id="new-user-pass" placeholder="Password" class="input-rounded w-full px-4 py-2 bg-slate-50 text-sm" required>
+                                <input type="text" id="new-user-name" placeholder="Full Name" class="input-rounded w-full px-4 py-2 bg-slate-50 text-sm" required>
+                                <input type="text" id="new-user-display" placeholder="Nickname" class="input-rounded w-full px-4 py-2 bg-slate-50 text-sm" required>
+                                <select id="new-user-role" class="input-rounded w-full px-4 py-2 bg-slate-50 text-sm"><option value="trainer">Trainer</option><option value="admin">Admin</option></select>
+                                <select id="new-user-team" class="input-rounded w-full px-4 py-2 bg-slate-50 text-sm"><option value="Training Specialist">Training Specialist</option><option value="Mandatory">Mandatory</option></select>
+                                <button type="submit" class="w-full py-2 bg-indigo-600 text-white rounded-lg font-bold text-sm">สร้างผู้ใช้ใหม่</button>
+                            </form>
+                        </details>
+                    </div>` : ''}
+                    <div class="bg-white rounded-2xl shadow-sm p-6 border border-slate-100">
+                        <h3 class="font-bold text-slate-700 mb-4">🔐 เปลี่ยนรหัสผ่าน</h3>
+                        <form onsubmit="handleChangePassword(event)"><div class="space-y-3"><input type="password" id="new-password" placeholder="รหัสผ่านใหม่ (ขั้นต่ำ 6 ตัว)" class="input-rounded w-full px-4 py-3 bg-slate-50 text-sm" required minlength="6"><button type="submit" class="w-full py-3 bg-blue-600 text-white rounded-xl font-bold">บันทึก</button></div></form>
+                    </div>
+                </div>`;
+        }
+
         async function uploadAvatar(input){if(input.files&&input.files[0]){const file=input.files[0];showLoading(true);try{const fileExt=file.name.split('.').pop();const fileName=`${currentUser.id}-${Math.random()}.${fileExt}`;const{error:uErr}=await supabaseClient.storage.from('avatars').upload(fileName,file);if(uErr)throw uErr;const{data:{publicUrl}}=supabaseClient.storage.from('avatars').getPublicUrl(fileName);await supabaseClient.from('profiles').update({avatar_url:publicUrl}).eq('id',currentUser.id);alert('Success');window.location.reload()}catch(e){alert(e.message)}finally{showLoading(false)}}}
         async function handleChangePassword(e){e.preventDefault();showLoading(true);const{error}=await supabaseClient.auth.updateUser({password:document.getElementById('new-password').value});showLoading(false);if(error)alert('Error: '+error.message);else{alert('สำเร็จ! กรุณาเข้าสู่ระบบใหม่');handleLogout()}}
         async function handleCreateUser(e){e.preventDefault();if(!confirm('ยืนยันสร้าง User?'))return;showLoading(true);const email=document.getElementById('new-user-email').value;const password=document.getElementById('new-user-pass').value;const fullName=document.getElementById('new-user-name').value;const display=document.getElementById('new-user-display').value;const role=document.getElementById('new-user-role').value;const team=document.getElementById('new-user-team').value;try{const{data:authData,error:authError}=await supabaseClient.auth.signUp({email,password,options:{data:{full_name:fullName}}});if(authError)throw authError;const{error:profileError}=await supabaseClient.from('profiles').insert({id:authData.user.id,email,full_name:fullName,display_name:display,role,team,user_id_code:email.split('@')[0]});if(profileError)throw profileError;alert('สร้าง User สำเร็จ!');window.location.reload()}catch(err){alert('Error: '+err.message);window.location.reload()}finally{showLoading(false)}}
